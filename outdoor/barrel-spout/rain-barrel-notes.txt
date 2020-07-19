@@ -1,0 +1,81 @@
+Barrel project notes
+
+3D printed elements
+barb generator inline 3/8 barb to 1" PVC adapter
+float adapter
+Enclosure
+
+Pi
+relay board
+DHC11 module
+PiCam
+float switch
+
+Pi steps
+Raspbian Stretch
+Enable camera
+enable ssh
+enable i2c
+
+http://www.circuitbasics.com/how-to-set-up-the-dht11-humidity-sensor-on-the-raspberry-pi/
+sudo apt-get install git-core
+cd Adafruit_Python_DHT
+sudo apt-get install build-essential python-dev
+sudo python setup.py install
+sudo examples/AdafruitDHT.py 11 4
+DHT11+ to pin 1 (3v3)
+DHT11- to pin 9 (GND)
+DHT11S to pin 7 (BC GPIO4, WP7)
+
+https://tutorials-raspberrypi.com/raspberry-pi-control-relay-switch-via-gpio/
+RBVCC to pin 17 (3V3)
+RBGND to pin 14 (GND)
+RBIN1 to pin 11 (BC GPIO17, WP0)
+RBIN2 to pin 13 (BC GPIO27, WP2)
+low closes switch
+high (or floating) opens (normal state on boot)
+
+https://www.raspberrypi.org/forums/viewtopic.php?t=108154 (22apr2015 post)
+>>> import RPi.GPIO as GPIO
+>>> GPIO.setmode(GPIO.BCM)
+>>> R1_GPIO=17
+>>> R2_GPIO=27
+>>> FS_GPIO=18
+>>> GPIO.setup(R1_GPIO, GPIO.OUT)
+>>> GPIO.setup(R2_GPIO, GPIO.OUT)
+>>> GPIO.output(R1_GPIO, GPIO.LOW) # on
+>>> GPIO.output(R2_GPIO, GPIO.LOW) # on
+>>> GPIO.output(R2_GPIO, GPIO.HIGH) # off
+>>> GPIO.output(R1_GPIO, GPIO.HIGH) # off
+>>> GPIO.setup(FS_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+>>> GPIO.input(FS_GPIO) # open contact
+0
+>>> GPIO.input(FS_GPIO)
+0
+>>> GPIO.input(FS_GPIO)
+0
+>>> GPIO.input(FS_GPIO) # closed contact
+1
+>>> GPIO.input(FS_GPIO)
+1
+>>> GPIO.input(FS_GPIO)
+1
+>>> GPIO.input(FS_GPIO)
+1
+
+https://www.jeffgeerling.com/blog/2017/raspberry-pi-zero-w-headless-time-lapse-camera
+>>> from picamera import PiCamera
+>>> from time import sleep
+>>> camera = PiCamera()
+>>> camera.capture('test1.jpg')
+
+More in water-control.py
+Fan opening needs to move over
+Fan opening needs more clearance around holes
+
+Install stuff:
+Per http://mattrichardson.com/Raspberry-Pi-Flask/
+sudo apt-get install python-pip
+(already present)
+sudo pip install flask
+(already present)
