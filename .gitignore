@@ -3,10 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# FreeCAD / Cura
+# FreeCAD / Cura / Blender
 *.FCStd1
 *.gco
 *.gcode
+*.blend1
 
 # C extensions
 *.so
