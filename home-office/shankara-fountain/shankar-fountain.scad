@@ -7,7 +7,9 @@ union()
             import("top-slab.stl");
             import("mountain-fountain7-mountain2_003.stl");
             import("mountain-fountain7-cave.stl");
-            import("lower-tube.stl");
+            //import("lower-tube.stl");
+            //  Slightly thicker
+            import("mountain-fountain9-lower-tube.stl");
             // Print support for top slab overhang
             // 0.8 is the minimum
             translate([-30,40,50]) cube([0.8,20,140]);
