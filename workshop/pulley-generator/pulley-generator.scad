@@ -2,6 +2,7 @@
 // https://github.com/MisterHW/IoP-satellite/blob/master/OpenSCAD%20bottle%20threads/thread_profile.scad
 // (entire directory) https://github.com/openscad/scad-utils
 // (entire directory) https://github.com/openscad/list-comprehension-demos
+// See this article for details on the implementation: https://hackaday.io/page/5252-generating-nice-threads-in-openscad
 use <thread_profile.scad>
 
 /* [General] */
@@ -56,16 +57,16 @@ module Pulley(pdiameter, rdiameter, shaft_diameter)
     echo("Generating pulley r", pulley_radius, "pdiameter", pdiameter, "shaft_diameter", shaft_diameter, "debug", debug_size);
     difference()
     {
-        cylinder(h=rdiameter + pulley_add_width_mm, r=pulley_radius, $fn=120);
+        cylinder(h=rdiameter + pulley_add_width_mm, r=pulley_radius, $fn=200);
         //rotate([90,0,0]) linear_extrude( height=10, center = true, convexity = 10)
                 //circle(d=rdiameter, $fn=120);
         // Torus cuts only about 1/3 into the pulley
         translate([0,0,(rdiameter + pulley_add_width_mm) /2]) rotate_extrude( convexity=10, $fn=120 ) 
                 translate([-pdiameter * 1.04 /2,0]) 
                     circle(d=rdiameter, $fn=120);
-        // Add 0.5mm tolerance in radius to hole
+        // Add 0.6mm tolerance in radius to hole
         translate([0,0,rdiameter * -0.1/2])
-        cylinder(h=rdiameter + pulley_add_width_mm + 1, r=shaft_diameter/2 + 0.5, $fn=200);
+        cylinder(h=rdiameter + pulley_add_width_mm + 1.2, r=shaft_diameter/2 + 0.5, $fn=200);
     }
 }
 
@@ -118,14 +119,14 @@ module Spacer(outer_shaft_diameter, rdiameter, inner_shaft_diameter)
     difference()
     {
         cylinder(h=spacer_height, r=outer_shaft_diameter/2, $fn=200);
-        translate([0,0,-0.2]) cylinder(h=spacer_height+0.4, r=inner_shaft_diameter/2 + 0.3, $fn=200);
+        translate([0,0,-0.2]) cylinder(h=spacer_height+0.4, r=inner_shaft_diameter/2 + 0.5, $fn=200);
     }
 }
 
 module Nut(shaft_diameter)
 {
-    // Make the cutter diameter 0.6mm bigger than the threaded part of the shaft
-    threaded_diameter = shaft_diameter - 2.7 + 0.6;
+    // Make the cutter diameter 0.8mm bigger than the threaded part of the shaft
+    threaded_diameter = shaft_diameter - 2.7 + 0.8;
     difference()
     {
         cylinder(h=8, r=shaft_diameter/2 * 1.9, $fn=6);
@@ -167,9 +168,9 @@ function my_thread_profile() = [
 
 // Expanded profile for cutting inside
 function my_thread_profile2() = [
-    [0,0], // always 0,0 - origin?
-    [1.4,0.9],
-    [0,1.8],
+    [0.2,0], // always 0,0 - origin?
+    [1.5,0.9],
+    [0.2,1.8],
     [-0.2,1.8],
     [-0.2,0]
 ];
