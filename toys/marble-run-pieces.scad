@@ -20,6 +20,8 @@ inside_reduction_distance = 1.2;
 radial_tolerance = 0.35;
 // Inside radius to fit snugly over 3/4" 250lb. PVC
 pvc_receptacle_inside_radius = 13.7;
+// Generate supports
+generate_support = 1;
 // Show profiles
 debug = 0;
 
@@ -43,7 +45,7 @@ module cross_section( adapter_height )
 // Adapter height is from base to top of shoulder;
 // i.e. when inserted into the next piece above,
 // how much height does it add?
-module basic_adapter( adapter_height )
+module basic_adapter( adapter_height, solid_mask = false )
 {
     // Minimum height of the base-to-shoulder is
     // interface length + wall thickness (for inside slant)
@@ -54,17 +56,22 @@ module basic_adapter( adapter_height )
       echo( "Invalid height", adapter_height, "- minimum", min_height );
   }
   else
-  // Note that the documentation for rotate_extrude()
-  // does actually explain that there's an implicit
-  // rotation from rotated around the Y axis to
-  // rotated around the Z axis.
-  rotate_extrude(convexity=10)
-    cross_section( adapter_height );
+      if (solid_mask)
+          hull()
+            rotate_extrude(convexity=10)
+                cross_section( adapter_height );
+      else
+          // Note that the documentation for rotate_extrude()
+          // does actually explain that there's an implicit
+          // rotation from rotated around the Y axis to
+          // rotated around the Z axis.
+          rotate_extrude(convexity=10)
+            cross_section( adapter_height );
 
 }
 
 // Gutter from top of start adapter to bottom of end adapter
-module gutter_drop( start_adapter_height, end_adapter_height, gutter_length )
+module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, solid_mask = false )
 {
     // Start elevation for gutter needs to allow space for entire cylinder
     // Note that elevation is for the bottom of each end
@@ -91,9 +98,9 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length )
         union()
         {
             // Start adapter
-            basic_adapter( start_adapter_height );
+            basic_adapter( start_adapter_height, solid_mask = solid_mask );
             // End adapter
-            translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0]) basic_adapter( end_adapter_height );
+            translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0]) basic_adapter( end_adapter_height, solid_mask = solid_mask );
             // Clip gutter by hull enclosing both start and end adapters
             intersection()
             {
@@ -111,19 +118,19 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length )
                 translate([-1*(inside_radius + wall_thickness),0,start_adapter_height-3 * wall_thickness - interface_length]) rotate([0,90+downward_slant,0]) difference()
                 {
                     cylinder(h=actual_length, r=inside_radius + wall_thickness);
-                    translate([0,0,-1]) cylinder(h=actual_length+2, r=inside_radius);
+                    if (!solid_mask) translate([0,0,-1]) cylinder(h=actual_length+2, r=inside_radius);
                     // Cut away top half
-                    translate([inside_radius * -3 + inside_radius * shallowness, inside_radius * -1.5, -1])
+                    if (!solid_mask) translate([inside_radius * -3 + inside_radius * shallowness, inside_radius * -1.5, -1])
                       cube([inside_radius * 3, inside_radius * 3, actual_length + 2]);
                 }
             }
         }
         // Cut out inside of end adapter (which has a gutter intrusion)
-        translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0])
+        if (!solid_mask) translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0])
           cylinder(h=end_adapter_height/2, r=inside_radius);
         // Cut holes in walls, clipped by inside half
         // of each adapter
-        intersection()
+        if (!solid_mask) intersection()
         {
             translate([-1*(inside_radius + wall_thickness),
                     0,
@@ -133,33 +140,43 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length )
             translate([0,-1.5*inside_radius,0]) cube([gutter_length + 2 * (inside_radius + wall_thickness),3*inside_radius,start_adapter_height + end_adapter_height]);
         }
     }
-    /*
-    translate([-(inside_radius + wall_thickness),0,start_elevation]) rotate([90,0,0]) rotate([0,90,0])
-    intersection()
-    {
-      translate([0,20,0]) rotate([downward_slant,0,0]) difference()
-      {
-        cylinder(h=actual_length, r=inside_radius+wall_thickness);
-        translate([0,0,-1]) cylinder(h=actual_length+2, r=inside_radius);
-        translate([-inside_radius * 1.5,-inside_radius*shallowness,-1]) cube([inside_radius*3,inside_radius*3,actual_length+2]);
-      }
-      translate([ 
-        0,
-        0,
-        1 * (inside_radius + wall_thickness)
-        ]) rotate([-90,0,0]) rotate([0,0,-90]) hull()
-      {
-          basic_adapter( start_adapter_height );
-          translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0]) basic_adapter( end_adapter_height );
-      }
-   }
-   */
 }
 
 // Basic drop from two adapters of specified height
 module basic_drop( adapter_height, gutter_length )
 {
     gutter_drop( adapter_height, adapter_height, gutter_length );
+    if (generate_support > 0)
+    {
+        start_height = adapter_height - 1.8 * inside_radius;
+        end_height = interface_length + inside_radius;
+        difference()
+        {
+            rotate([90,0,0]) 
+                union()
+                {
+                    linear_extrude(height=0.5)
+                        polygon(points=[
+                    [inside_radius+wall_thickness,0],
+                    [inside_radius+wall_thickness, start_height],
+                    [inside_radius + wall_thickness + gutter_length, end_height],
+                    [inside_radius + wall_thickness + gutter_length, 0]
+                        ]);
+                    translate([0,0,-0.4])
+                        linear_extrude(height=1.8)
+                            polygon(points=[
+                               [inside_radius + wall_thickness,0],
+                               [inside_radius + wall_thickness, 4],
+                               [inside_radius + wall_thickness + gutter_length, 4],
+                               [inside_radius + wall_thickness + gutter_length, 0]
+                            ]);
+                }
+            gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            //translate([0,0,-0.2]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([-0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+        }
+    }
 }
 
 // Minimum is 11.06
@@ -169,6 +186,9 @@ module basic_drop( adapter_height, gutter_length )
 //translate([40,0,0]) basic_adapter(20);
 //cross_section(70);
 basic_drop( 60, 100 );
+// Currently only works up until around 75, regardless
+// of whether heights are symmetric or asymmetric
+//gutter_drop( 75, 75, 100, solid_mask = false );
 if (debug)
 {
     cross_section(20);
