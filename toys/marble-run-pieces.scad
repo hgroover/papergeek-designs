@@ -3,6 +3,9 @@
 // https://www.thingiverse.com/thing:4079409
 // https://www.thingiverse.com/thing:3460633
 
+// Slicer notes: Cura will need the "print thin walls"
+// box checked to use generated supports.
+
 // $fn = 120 produces nice curves but ridiculously large
 // gcode and correspondingly long print times.
 $fn = 60;
@@ -155,7 +158,7 @@ module basic_drop( adapter_height, gutter_length )
             rotate([90,0,0]) 
                 union()
                 {
-                    linear_extrude(height=0.5)
+                    linear_extrude(height=0.4)
                         polygon(points=[
                     [inside_radius+wall_thickness,0],
                     [inside_radius+wall_thickness, start_height],
@@ -163,16 +166,16 @@ module basic_drop( adapter_height, gutter_length )
                     [inside_radius + wall_thickness + gutter_length, 0]
                         ]);
                     translate([0,0,-0.4])
-                        linear_extrude(height=1.8)
+                        linear_extrude(height=0.8)
                             polygon(points=[
                                [inside_radius + wall_thickness,0],
-                               [inside_radius + wall_thickness, 4],
-                               [inside_radius + wall_thickness + gutter_length, 4],
+                               [inside_radius + wall_thickness, 2],
+                               [inside_radius + wall_thickness + gutter_length, 2],
                                [inside_radius + wall_thickness + gutter_length, 0]
                             ]);
                 }
             gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            //translate([0,0,-0.2]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([0,0,-0.2]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
             translate([0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
             translate([-0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
         }
