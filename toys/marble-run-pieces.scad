@@ -45,6 +45,31 @@ module cross_section( adapter_height )
         [inside_radius + wall_thickness,0]]);
 }
 
+// Inside or outside of whirlpool. Inside is a cutter so goes slightly above and below
+module whirlpool_cross_section( base, inside_cutter )
+{
+    // Height from outside bottom to outside top
+    height = 32;
+    // Base = elevation of outside bottom
+    top = inside_cutter ? base + height + 1 : base + height;
+    bottom = inside_cutter ? base - 1 : base;
+    radius = inside_cutter ? 50 : 52;
+    bottom_radius = inside_cutter ? inside_radius : inside_radius + wall_thickness;
+    // Cornering offset assumes travel from bottom to top
+    corner_offset_sign = inside_cutter ? 1 : -1;
+    // In FreeCAD we'd do this with Bezier curves...
+    // Perform fillet on sharp edges
+ //echo("Bottom",bottom,"br",bottom_radius,"top",top,"radius",radius);
+    polygon(points=[
+        [0,bottom],
+        [bottom_radius,bottom],
+        [bottom_radius,bottom+10 + wall_thickness * sin(45) * corner_offset_sign],
+        [radius,bottom+20 + wall_thickness * sin(45) * corner_offset_sign],
+        [radius,top],
+        [0,top]
+    ]);
+}
+
 // Adapter height is from base to top of shoulder;
 // i.e. when inserted into the next piece above,
 // how much height does it add?
@@ -175,20 +200,48 @@ module basic_drop( adapter_height, gutter_length )
                             ]);
                 }
             gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([0,0,-0.2]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([-0.5,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([0,0,-0.4]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([0.8,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            translate([-0.8,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
         }
+    }
+}
+
+module whirlpool_bowl(whirlpool_base)
+{
+    difference()
+    {
+        rotate_extrude(convexity=4)
+            whirlpool_cross_section(whirlpool_base, false);
+        rotate_extrude(convexity=4)
+            whirlpool_cross_section(whirlpool_base, true);
+        // Cutaway view for debugging purposes
+        //#translate([0,-60,0]) cube([120,120,100]);
+    }
+}
+
+module whirlpool_exit(whirlpool_base)
+{
+    rotate_extrude(
+}
+
+module whirlpool(base_elevation)
+{
+    union()
+    {
+        whirlpool_bowl(base_elevation);
+        whirlpool_exit(base_elevation);
     }
 }
 
 // Minimum is 11.06
 //basic_adapter(10);
-//basic_adapter(60);
+//basic_adapter(20);
+whirlpool_exit(42);
 //basic_adapter(120);
 //translate([40,0,0]) basic_adapter(20);
 //cross_section(70);
-basic_drop( 60, 100 );
+//basic_drop( 60, 100 );
 // Currently only works up until around 75, regardless
 // of whether heights are symmetric or asymmetric
 //gutter_drop( 75, 75, 100, solid_mask = false );
