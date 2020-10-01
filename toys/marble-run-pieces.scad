@@ -102,6 +102,7 @@ module basic_adapter( adapter_height, solid_mask = false )
 module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, solid_mask = false )
 {
     // Start elevation for gutter needs to allow space for entire cylinder
+    // Gutter length is distance from facing outside walls
     // Note that elevation is for the bottom of each end
     // at the point of entry/exit
     top_reduction = 3 * inside_radius + wall_thickness;
@@ -110,14 +111,16 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, sol
     // Shallowness factor is the amount we remove from
     // a half-cylinder in units of inside_radius
     shallowness = 0.28;
+    // Actual gutter length goes from far inside walls
+    actual_gutter_length = gutter_length + 2 * wall_thickness + 4 * inside_radius;
     // Actual length extends into both adapters and
-    // is measured by the hypotenuse of the drop.
+    // is the hypotenuse of the drop.
     // Start goes to the far wall of the cylinder
     drop_height = start_elevation - end_elevation;
-    actual_length = sqrt(gutter_length * gutter_length + drop_height * drop_height) + 3 * (inside_radius + wall_thickness);
+    actual_length = sqrt(actual_gutter_length * actual_gutter_length + drop_height * drop_height); // + 4 * inside_radius + 2 * wall_thickness;
     // When we rotate downward, we need to shift by the 
-    echo("Gutter:", gutter_length, "Drop:", drop_height, "actual:", actual_length, "Slant:", downward_slant);
-    downward_slant = asin(drop_height / gutter_length);
+    downward_slant = atan(drop_height / gutter_length);
+    echo("Gutter:", gutter_length, "AGL:", actual_gutter_length, "Drop:", drop_height, "actual:", actual_length, "Slant:", downward_slant, "Start:", start_elevation, "tr:", top_reduction, "End:", end_elevation);
     // Hollow out end adapter from gutter intrusion,
     // and cut holes in walls
     difference()
@@ -128,14 +131,14 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, sol
             // Start adapter
             basic_adapter( start_adapter_height, solid_mask = solid_mask );
             // End adapter
-            translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0]) basic_adapter( end_adapter_height, solid_mask = solid_mask );
+            translate([gutter_length, 0, 0]) basic_adapter( end_adapter_height, solid_mask = solid_mask );
             // Clip gutter by hull enclosing both start and end adapters
             intersection()
             {
                 hull()
                 {
                     basic_adapter( start_adapter_height );
-                    translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0])
+                    translate([gutter_length, 0, 0])
                         basic_adapter( end_adapter_height );
                 }
 
@@ -220,24 +223,77 @@ module whirlpool_bowl(whirlpool_base)
     }
 }
 
-module whirlpool_exit(whirlpool_base)
+module whirlpool_exit(whirlpool_base, mask=false)
 {
-    rotate_extrude(
+    union()
+    {
+        translate([0,-(inside_radius + wall_thickness + 5),whirlpool_base+0.1])
+        // Square top with bottom of bowl
+        rotate([2,0,0])
+        // Rotate into vertical drain position
+        rotate([0,90,0])
+        difference()
+        {
+        rotate_extrude(convexity=4, angle=88)
+            translate([inside_radius + wall_thickness + 5,0,0])
+                circle(r=(inside_radius + wall_thickness));
+        rotate([0,0,-1])
+            rotate_extrude(convexity=4, angle=92)
+                translate([inside_radius + wall_thickness + 5,0,0])
+                    circle(r=(inside_radius));
+        }
+        translate([0,-(inside_radius + wall_thickness+4),whirlpool_base-19.15]) rotate([92,0,0]) difference()
+        {
+            linear_extrude(height=46)
+            circle(r=(inside_radius + wall_thickness));
+            if (!mask)
+            translate([0,0,-0.1]) linear_extrude(height=46.2)
+            circle(r=inside_radius);
+        }
+    }
 }
 
 module whirlpool(base_elevation)
 {
     union()
     {
+        translate([0,64.5,0])
+        difference()
+        {
+            intersection()
+            {
+                rotate([0,0,-53.8])
+                gutter_drop(120, 120, 150);
+                cylinder(r=(inside_radius+wall_thickness+40), h=140);
+            }
+            translate([-0.5*wall_thickness,-64.5 - wall_thickness,0]) hull() union() {
+                whirlpool_bowl(base_elevation);
+                translate([0,0,30]) whirlpool_bowl(base_elevation);
+            }
+        }
         whirlpool_bowl(base_elevation);
-        whirlpool_exit(base_elevation);
+        difference()
+        {
+            union()
+            {
+                whirlpool_exit(base_elevation);
+                difference()
+                {
+                    translate([0,-64.3,0]) basic_adapter(120);
+                    whirlpool_exit(base_elevation, mask=true);
+                }
+            }
+            translate([0,-64.3,0]) cylinder(r=inside_radius, h=100);
+        }
+        // Add support for exit
+        translate([0,-49.5,0]) cube([0.4,35,8.5]);
     }
 }
 
 // Minimum is 11.06
 //basic_adapter(10);
 //basic_adapter(20);
-whirlpool_exit(42);
+whirlpool(42);
 //basic_adapter(120);
 //translate([40,0,0]) basic_adapter(20);
 //cross_section(70);
