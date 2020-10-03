@@ -10,6 +10,7 @@
 Measurement notes
 =================
 US high-pressure PVC (250psi), 3/4" - outside 27.5, inside 20.2
+US low-pressure PVC, 3/4" - outside 27.0, inside 23.0
 Q-ba-maze marbles, 7/16" diameter = 11.125
 Using default wall thickness of 2.3 and radial tolerance 0.35, we'd have 17.55 passing diameter which barely works for the smaller Q-ba-maze marbles, possibly also for the larger 12.7mm marbles (1/2")
 */
@@ -17,7 +18,7 @@ Using default wall thickness of 2.3 and radial tolerance 0.35, we'd have 17.55 p
 /* [General] */
 
 // Which piece to print
-which_piece = "60mm"; // [20mm:20mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, whirlpool:120mm whirlpool]
+which_piece = "60mm"; // [20mm:20mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool]
 // Generate supports, if applicable for selected piece
 generate_support = true;
 
@@ -375,7 +376,13 @@ if (which_piece == "whirlpool")
 if (which_piece == "pvc75in")
     rotate_extrude(convexity=10)
         pvc_cross_section(pvc_radius=20.2/2 - radial_tolerance, height=50);
+if (which_piece == "pvc75thinin")
+    rotate_extrude(convexity=10)
+        pvc_cross_section(pvc_radius=23.0/2 - radial_tolerance, height=50);
 if (which_piece == "pvc75out")
     rotate_extrude(convexity=10)
         pvc_cross_section(pvc_radius=27.5/2 + radial_tolerance, height=50);
+if (which_piece == "pvc75thinout")
+    rotate_extrude(convexity=10)
+        pvc_cross_section(pvc_radius=27.0/2 + radial_tolerance, height=50);
 //cross_section(70);
