@@ -6,8 +6,15 @@
 // Slicer notes: Cura will need the "print thin walls"
 // box checked to use generated supports.
 
-// $fn = 120 produces nice curves but ridiculously large
-// gcode and correspondingly long print times.
+/* [General] */
+
+// Which piece to print
+which_piece = "60mm"; // [20mm:20mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, whirlpool:120mm whirlpool]
+// Generate supports, if applicable for selected piece
+generate_support = true;
+
+/* [Advanced options] */
+// $fn = 120 produces nice curves but ridiculously large gcode and correspondingly long print times.
 $fn = 60;
 // Length of the interface that fits inside another piece
 interface_length = 6;
@@ -18,13 +25,12 @@ wall_thickness = 2.3;
 // Distance between shoulder and top of inward reduction
 // in units of wall thickness
 inside_reduction_distance = 1.2;
-// Radial tolerance means how much we subtract from 
-// inside radius to fit inside another piece
+// Radial tolerance means how much we subtract from inside radius to fit inside another piece
 radial_tolerance = 0.35;
+// Shallowness factor is the amount we remove from a half-cylinder to create a gutter, in units of inside_radius
+shallowness = 0.28;
 // Inside radius to fit snugly over 3/4" 250lb. PVC
 pvc_receptacle_inside_radius = 13.7;
-// Generate supports
-generate_support = 1;
 // Show profiles
 debug = 0;
 
@@ -99,32 +105,35 @@ module basic_adapter( adapter_height, solid_mask = false )
 }
 
 // Gutter from top of start adapter to bottom of end adapter
-module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, solid_mask = false )
+module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, solid_mask = false, covered = false )
 {
     // Start elevation for gutter needs to allow space for entire cylinder
-    // Gutter length is distance from facing outside walls
+    // Gutter length is distance from center of start to center of end
     // Note that elevation is for the bottom of each end
     // at the point of entry/exit
     top_reduction = 3 * inside_radius + wall_thickness;
     start_elevation = start_adapter_height - top_reduction/*  - wall_thickness - inside_reduction_distance * wall_thickness*/;
     end_elevation = interface_length + wall_thickness;
-    // Shallowness factor is the amount we remove from
-    // a half-cylinder in units of inside_radius
-    shallowness = 0.28;
-    // Actual gutter length goes from far inside walls
-    actual_gutter_length = gutter_length + 2 * wall_thickness + 4 * inside_radius;
+    // Actual gutter length goes from far inside wall of start to center of end
+    actual_gutter_length = gutter_length + inside_radius;
     // Actual length extends into both adapters and
     // is the hypotenuse of the drop.
     // Start goes to the far wall of the cylinder
     drop_height = start_elevation - end_elevation;
-    actual_length = sqrt(actual_gutter_length * actual_gutter_length + drop_height * drop_height); // + 4 * inside_radius + 2 * wall_thickness;
-    // When we rotate downward, we need to shift by the 
+    actual_length = sqrt(actual_gutter_length * actual_gutter_length + drop_height * drop_height);
+    // When we rotate downward, we also need to shift slightly
     downward_slant = atan(drop_height / gutter_length);
+    outside_diameter = 2 * (wall_thickness + inside_radius);
     echo("Gutter:", gutter_length, "AGL:", actual_gutter_length, "Drop:", drop_height, "actual:", actual_length, "Slant:", downward_slant, "Start:", start_elevation, "tr:", top_reduction, "End:", end_elevation);
     // Hollow out end adapter from gutter intrusion,
-    // and cut holes in walls
+    // and cut holes in walls. Note that covered connector
+    // requires additional hollowing on the end and also
+    // requires hollowing on the start adapter.
     difference()
     {
+        // Z translation for gutter is start elevation 
+        // plus half of OD, since the cylinder is rotated on center
+        gutter_z = start_elevation + inside_radius + wall_thickness; // was start_adapter_height-3 * wall_thickness - interface_length
         // Create start and end adapters
         union()
         {
@@ -145,27 +154,40 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, sol
                 // Basic hollow cylinder for the gutter,
                 // first rotated into downward slant,
                 // then translated to butt against rear wall
-                // of start adapter
-                translate([-1*(inside_radius + wall_thickness),0,start_adapter_height-3 * wall_thickness - interface_length]) rotate([0,90+downward_slant,0]) difference()
+                // of start adapter.
+                translate([-1*(inside_radius + wall_thickness),0,gutter_z]) rotate([0,90+downward_slant,0]) difference()
                 {
                     cylinder(h=actual_length, r=inside_radius + wall_thickness);
                     if (!solid_mask) translate([0,0,-1]) cylinder(h=actual_length+2, r=inside_radius);
                     // Cut away top half
-                    if (!solid_mask) translate([inside_radius * -3 + inside_radius * shallowness, inside_radius * -1.5, -1])
+                    if (!solid_mask && !covered) translate([inside_radius * -3 + inside_radius * shallowness, inside_radius * -1.5, -1])
                       cube([inside_radius * 3, inside_radius * 3, actual_length + 2]);
                 }
             }
         }
-        // Cut out inside of end adapter (which has a gutter intrusion)
-        if (!solid_mask) translate([2 * (inside_radius + wall_thickness) + gutter_length, 0, 0])
-          cylinder(h=end_adapter_height/2, r=inside_radius);
+        // Cut out inside of end adapter (which has a gutter intrusion). 
+        // This needs to be slightly higher for covered gutter
+        // but we don't want to cut into the taper at the top.
+        if (!solid_mask) translate([gutter_length, 0, 0])
+          cylinder(h=end_elevation + 2 * (inside_radius + wall_thickness) + sin(downward_slant) * tan(downward_slant) * outside_diameter + 1, r=inside_radius);
+        // Also cut out inside of start adapter for
+        // covered gutter case. This needs to start at
+        // the center of the gutter.
+        // This goes down a bit low for shallow slants but also works for steeper inclinations
+        start_interface_top = start_elevation + outside_diameter /* + sin(downward_slant) * tan(downward_slant) * outside_diameter*/;
+        // start elevation is the elevation at the far inside wall of start adapter
+        start_interface_middle = start_elevation /*+ inside_radius */ + wall_thickness;
+        //echo("SIT:", start_interface_top, "OD:", outside_diameter, "Sin(S)*tan(S)*OD:", sin(downward_slant), tan(downward_slant), sin(downward_slant) * tan(downward_slant) * outside_diameter );
+        if (!solid_mask)
+            translate([0,0,start_interface_middle])
+                cylinder(h=start_interface_top - start_interface_middle, r=inside_radius);
         // Cut holes in walls, clipped by inside half
         // of each adapter
         if (!solid_mask) intersection()
         {
             translate([-1*(inside_radius + wall_thickness),
                     0,
-                    start_adapter_height - 3 * wall_thickness - interface_length])
+                    gutter_z])
                 rotate([0,90+downward_slant,0])
                     cylinder(h=actual_length, r=inside_radius);
             translate([0,-1.5*inside_radius,0]) cube([gutter_length + 2 * (inside_radius + wall_thickness),3*inside_radius,start_adapter_height + end_adapter_height]);
@@ -174,10 +196,12 @@ module gutter_drop( start_adapter_height, end_adapter_height, gutter_length, sol
 }
 
 // Basic drop from two adapters of specified height
-module basic_drop( adapter_height, gutter_length )
+module basic_drop( adapter_height, gutter_length, adapter2 = 0, covered_connector = false )
 {
-    gutter_drop( adapter_height, adapter_height, gutter_length );
-    if (generate_support > 0)
+    end_adapter_height = ((adapter2 != 0) ? adapter2 : adapter_height);
+    //echo("BD: ah:", adapter_height, "GL:", gutter_length, "A2:", adapter2, "EAH:", end_adapter_height);
+    gutter_drop( adapter_height, end_adapter_height, gutter_length, covered = covered_connector );
+    if (generate_support)
     {
         start_height = adapter_height - 1.8 * inside_radius;
         end_height = interface_length + inside_radius;
@@ -202,10 +226,10 @@ module basic_drop( adapter_height, gutter_length )
                                [inside_radius + wall_thickness + gutter_length, 0]
                             ]);
                 }
-            gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([0,0,-0.4]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([0.8,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
-            translate([-0.8,0,0]) gutter_drop( adapter_height, adapter_height, gutter_length, solid_mask = true );
+            gutter_drop( adapter_height, end_adapter_height, gutter_length, solid_mask = true );
+            translate([0,0,-0.4]) gutter_drop( adapter_height, end_adapter_height, gutter_length, solid_mask = true );
+            translate([0.8,0,0]) gutter_drop( adapter_height, end_adapter_height, gutter_length, solid_mask = true );
+            translate([-0.8,0,0]) gutter_drop( adapter_height, end_adapter_height, gutter_length, solid_mask = true );
         }
     }
 }
@@ -263,7 +287,7 @@ module whirlpool(base_elevation)
             intersection()
             {
                 rotate([0,0,-53.8])
-                gutter_drop(120, 120, 150);
+                gutter_drop(120, 120, 281);
                 cylinder(r=(inside_radius+wall_thickness+40), h=140);
             }
             translate([-0.5*wall_thickness,-64.5 - wall_thickness,0]) hull() union() {
@@ -292,8 +316,20 @@ module whirlpool(base_elevation)
 
 // Minimum is 11.06
 //basic_adapter(10);
-//basic_adapter(20);
-whirlpool(42);
+if (which_piece == "20mm")
+    basic_adapter(20);
+if (which_piece == "60mm")
+    basic_adapter(60);
+if (which_piece == "120mm")
+    basic_adapter(120);
+if (which_piece == "60x100")
+    basic_drop(60, 100);
+if (which_piece == "60x100c")
+    basic_drop(60, 100, covered_connector=true);
+if (which_piece == "120x150")
+    basic_drop(120, 150, adapter2=60);
+if (which_piece == "whirlpool")
+    whirlpool(42);
 //basic_adapter(120);
 //translate([40,0,0]) basic_adapter(20);
 //cross_section(70);
