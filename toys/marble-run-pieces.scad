@@ -34,12 +34,16 @@ wall_thickness = 2.3;
 // Distance between shoulder and top of inward reduction
 // in units of wall thickness
 inside_reduction_distance = 1.2;
-// Radial tolerance means how much we subtract from inside radius to fit inside another piece
+// Radial tolerance means how much we subtract from inside radius to fit inside another piece, when both parts are printed
 radial_tolerance = 0.35;
+// Radial tolerance against molded parts like PVC pipe is tighter
+radial_tolerance_manufactured = 0.12;
 // Shallowness factor is the amount we remove from a half-cylinder to create a gutter, in units of inside_radius
 shallowness = 0.28;
 // Inside radius to fit snugly over 3/4" 250lb. PVC
 pvc_receptacle_inside_radius = 13.75;
+// Overall length of adapters
+pvc_adapter_length = 50;
 // Show profiles
 debug = 0;
 
@@ -62,18 +66,20 @@ module cross_section( adapter_height )
 
 // Cross-section for PVC adapter from outside radius
 // to either inside or outside of PVC pipe (based on specified radius which should have tolerance added if inside)
-module pvc_cross_section( pvc_radius, height )
+module pvc_cross_section( pvc_radius, height, inside_pvc )
 {
     fit_radius = pvc_radius;
+    pvc_inside_r = inside_pvc ? fit_radius - wall_thickness : fit_radius;
+    pvc_outside_r = inside_pvc ? fit_radius : fit_radius + wall_thickness;
     outside_radius = inside_radius + wall_thickness + radial_tolerance;
-    echo("OR:", outside_radius, "FR:", fit_radius);
+    echo("OR:", outside_radius, "FR:", fit_radius, "IN:", inside_pvc);
     polygon(points=[
     [outside_radius, 0],
     [outside_radius, interface_length],
-    [fit_radius, height - 2 * interface_length],
-    [fit_radius, height],
-    [fit_radius + wall_thickness, height],
-    [fit_radius + wall_thickness, height - 2 * interface_length],
+    [pvc_inside_r, height - 2 * interface_length],
+    [pvc_inside_r, height],
+    [pvc_outside_r, height],
+    [pvc_outside_r, height - 2 * interface_length],
     [outside_radius + wall_thickness, interface_length],
     [outside_radius + wall_thickness, 0]
     ]);
@@ -375,14 +381,14 @@ if (which_piece == "whirlpool")
 // Works with dropstart and dropend
 if (which_piece == "pvc75in")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=20.2/2 - radial_tolerance, height=50);
+        pvc_cross_section(pvc_radius=20.2/2 - radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=true);
 if (which_piece == "pvc75thinin")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=23.0/2 - radial_tolerance, height=50);
+        pvc_cross_section(pvc_radius=23.0/2 - radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=true);
 if (which_piece == "pvc75out")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=27.5/2 + radial_tolerance, height=50);
+        pvc_cross_section(pvc_radius=27.5/2 + radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=false);
 if (which_piece == "pvc75thinout")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=27.0/2 + radial_tolerance, height=50);
+        pvc_cross_section(pvc_radius=27.0/2 + radial_tolerance, height=pvc_adapter_length, inside_pvc=false);
 //cross_section(70);
