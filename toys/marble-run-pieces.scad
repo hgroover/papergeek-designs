@@ -35,9 +35,9 @@ wall_thickness = 2.3;
 // in units of wall thickness
 inside_reduction_distance = 1.2;
 // Radial tolerance means how much we subtract from inside radius to fit inside another piece, when both parts are printed
-radial_tolerance = 0.35;
+radial_tolerance = 0.2;
 // Radial tolerance against molded parts like PVC pipe is tighter
-radial_tolerance_manufactured = 0.12;
+radial_tolerance_manufactured = 0.09;
 // Shallowness factor is the amount we remove from a half-cylinder to create a gutter, in units of inside_radius
 shallowness = 0.28;
 // Inside radius to fit snugly over 3/4" 250lb. PVC
@@ -75,12 +75,12 @@ module pvc_cross_section( pvc_radius, height, inside_pvc )
     echo("OR:", outside_radius, "FR:", fit_radius, "IN:", inside_pvc);
     polygon(points=[
     [outside_radius, 0],
-    [outside_radius, interface_length],
+    [outside_radius, 2 * interface_length],
     [pvc_inside_r, height - 2 * interface_length],
     [pvc_inside_r, height],
     [pvc_outside_r, height],
     [pvc_outside_r, height - 2 * interface_length],
-    [outside_radius + wall_thickness, interface_length],
+    [outside_radius + wall_thickness, 2 * interface_length],
     [outside_radius + wall_thickness, 0]
     ]);
 }
@@ -381,7 +381,7 @@ if (which_piece == "whirlpool")
 // Works with dropstart and dropend
 if (which_piece == "pvc75in")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=20.2/2 - radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=true);
+        pvc_cross_section(pvc_radius=20.6/2 - radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=true);
 if (which_piece == "pvc75thinin")
     rotate_extrude(convexity=10)
         pvc_cross_section(pvc_radius=23.0/2 - radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=true);
@@ -390,5 +390,5 @@ if (which_piece == "pvc75out")
         pvc_cross_section(pvc_radius=27.5/2 + radial_tolerance_manufactured, height=pvc_adapter_length, inside_pvc=false);
 if (which_piece == "pvc75thinout")
     rotate_extrude(convexity=10)
-        pvc_cross_section(pvc_radius=27.0/2 + radial_tolerance, height=pvc_adapter_length, inside_pvc=false);
+        pvc_cross_section(pvc_radius=26.9/2 + radial_tolerance, height=pvc_adapter_length, inside_pvc=false);
 //cross_section(70);
