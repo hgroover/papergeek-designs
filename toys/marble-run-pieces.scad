@@ -18,7 +18,7 @@ Using default wall thickness of 2.3 and radial tolerance 0.35, we'd have 17.55 p
 /* [General] */
 
 // Which piece to print
-which_piece = "60mm"; // [20mm:20mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool]
+which_piece = "60mm"; // [20mm:20mm straight, 40mm:40mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool,trap20:20mm trap bowl,trap60:60mm trap bowl,trap120:120mm trap bowl]
 // Generate supports, if applicable for selected piece
 generate_support = true;
 
@@ -348,14 +348,49 @@ module whirlpool(base_elevation)
     }
 }
 
+module trap_bowl(height)
+{
+    trap_radius = 50;
+        union()
+        {
+            // Adapter with base exit into trap
+            difference()
+            {
+                basic_adapter(height);
+                translate([5,4,8]) rotate([0,90,0]) cylinder(r=8,h=10);
+                translate([5,-4,-8]) cube([16,8,16]);
+            }
+            // trap bowl
+            difference()
+            {
+                cylinder(r=trap_radius, h=15);
+                translate([0,0,wall_thickness]) cylinder(r=trap_radius-wall_thickness, h=15);
+            }
+            // Add a slight ramp to propel marbles toward the rim
+            // with slight angular momentum
+            translate([0,0,wall_thickness])
+                rotate([0,0,150])
+                    hull() linear_extrude(height=3, convexity=10, twist=-360)
+                        polygon(points=[
+                            [0,0],
+                            [0,1],
+                            [-inside_radius,3],
+                            [-inside_radius,0]
+                        ]);
+        }
+}
+
 // Minimum is 11.06
 //basic_adapter(10);
 if (which_piece == "20mm")
     basic_adapter(20);
+if (which_piece == "40mm")
+    basic_adapter(40);
 if (which_piece == "60mm")
     basic_adapter(60);
 if (which_piece == "120mm")
     basic_adapter(120);
+
 if (which_piece == "60x100")
     basic_drop(60, 100);
 if (which_piece == "60x100c")
@@ -376,8 +411,10 @@ if (which_piece == "dropend")
     }
 if (which_piece == "120x150")
     basic_drop(120, 150, adapter2=60);
+
 if (which_piece == "whirlpool")
     whirlpool(42);
+
 // Works with dropstart and dropend
 if (which_piece == "pvc75in")
     rotate_extrude(convexity=10)
@@ -391,4 +428,12 @@ if (which_piece == "pvc75out")
 if (which_piece == "pvc75thinout")
     rotate_extrude(convexity=10)
         pvc_cross_section(pvc_radius=26.9/2 + radial_tolerance, height=pvc_adapter_length, inside_pvc=false);
+
+if (which_piece == "trap20")
+    trap_bowl(20);
+if (which_piece == "trap60")
+    trap_bowl(60);
+if (which_piece == "trap120")
+    trap_bowl(120);
+
 //cross_section(70);
