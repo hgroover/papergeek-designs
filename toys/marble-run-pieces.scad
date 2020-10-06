@@ -367,16 +367,47 @@ module trap_bowl(height)
                 translate([0,0,wall_thickness]) cylinder(r=trap_radius-wall_thickness, h=15);
             }
             // Add a slight ramp to propel marbles toward the rim
-            // with slight angular momentum
+            // with slight angular momentum.
+            // Using linear_extrude with twist almost
+            // gives us the desired shape, but there is
+            // no solidity. hull() subverts the purpose
+            // of the spiral ramp
+            /*
             translate([0,0,wall_thickness])
                 rotate([0,0,150])
-                    hull() linear_extrude(height=4, convexity=10, twist=-360)
+                    //hull() 
+                    union()
+                    {
+                    linear_extrude(height=4, convexity=10, twist=-360)
                         polygon(points=[
-                            [0,0],
-                            [0,1],
+                            [-1,0],
+                            [-1,1],
                             [-inside_radius,3],
                             [-inside_radius,0]
                         ]);
+                    linear_extrude(height=4,convexity=4)
+                        polygon(points=[
+                            [-1,0],
+                            [-1,1],
+                            [-inside_radius,3],
+                            [-inside_radius,0]
+                        ]);
+                    }
+             */
+             total_height = 5;
+             rotate([0,0,163])
+             translate([0,0,wall_thickness]) union()
+             {
+                 for (a=[0:1:360])
+                     rotate([0,0,a])
+                        linear_extrude(total_height * a/360, convexity=8)
+                        polygon(points=[
+                            [-1,0],
+                            [-1,1],
+                            [-inside_radius,3],
+                            [-inside_radius,0]
+                        ]);
+             }
         }
 }
 
