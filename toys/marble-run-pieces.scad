@@ -18,7 +18,7 @@ Using default wall thickness of 2.3 and radial tolerance 0.35, we'd have 17.55 p
 /* [General] */
 
 // Which piece to print
-which_piece = "60mm"; // [20mm:20mm straight, 40mm:40mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool,trap20:20mm trap bowl,trap60:60mm trap bowl,trap120:120mm trap bowl]
+which_piece = "60mm"; // [20mm:20mm straight, 40mm:40mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool,trap20:20mm trap bowl,trap60:60mm trap bowl,trap120:120mm trap bowl,funnel:Top feeding funnel]
 // Generate supports, if applicable for selected piece
 generate_support = true;
 
@@ -370,7 +370,7 @@ module trap_bowl(height)
             // with slight angular momentum
             translate([0,0,wall_thickness])
                 rotate([0,0,150])
-                    hull() linear_extrude(height=3, convexity=10, twist=-360)
+                    hull() linear_extrude(height=4, convexity=10, twist=-360)
                         polygon(points=[
                             [0,0],
                             [0,1],
@@ -378,6 +378,22 @@ module trap_bowl(height)
                             [-inside_radius,0]
                         ]);
         }
+}
+
+// Simple funnel
+module funnel(radius)
+{
+    height = radius;
+    rotate_extrude(convexity=4)
+        polygon(points=[
+            [inside_radius,0],
+            [inside_radius,interface_length+2],
+            [radius,height],
+            [radius + wall_thickness,height],
+            [radius + wall_thickness,height-2],
+            [inside_radius + wall_thickness, interface_length],
+            [inside_radius + wall_thickness,0]
+        ]);
 }
 
 // Minimum is 11.06
@@ -435,5 +451,8 @@ if (which_piece == "trap60")
     trap_bowl(60);
 if (which_piece == "trap120")
     trap_bowl(120);
+
+if (which_piece == "funnel")
+    funnel(40);
 
 //cross_section(70);
