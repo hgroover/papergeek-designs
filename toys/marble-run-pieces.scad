@@ -311,6 +311,22 @@ module whirlpool_exit(whirlpool_base, mask=false)
     }
 }
 
+module bowl_support(base_elevation, angle)
+{
+    difference()
+    {
+    translate([0,0,0])
+        rotate([0,0,angle])
+            translate([0,inside_radius+wall_thickness+1,0])
+                cube([0.4, 35, base_elevation + 20]);
+    translate([0,0,-0.6])
+        rotate_extrude(convexity=4)
+            whirlpool_cross_section(base_elevation, false);
+    hull()
+        whirlpool_exit(base_elevation, true);
+    }
+}
+
 module whirlpool(base_elevation)
 {
     union()
@@ -343,8 +359,22 @@ module whirlpool(base_elevation)
             }
             translate([0,-64.3,0]) cylinder(r=inside_radius, h=100);
         }
-        // Add support for exit
-        translate([0,-49.5,0]) cube([0.4,35,8.5]);
+        if (generate_support)
+        {
+            // Add support for exit
+            translate([0,-49.5,0]) 
+                cube([0.4,35,8.5]);
+            // Add support for bowl
+            // Trying to build it up on a shallow slant
+            // results in stringing, which can sometimes
+            // get pulled up to print head level
+            // and provide a handle to knock the whole
+            // thing down.
+            for (a=[12:24:160])
+                bowl_support(base_elevation, a);
+            for (a=[-12:-24:-160])
+                bowl_support(base_elevation, a);
+        }
         // Add wall for entry - random bouncing of marble
         // as it exits the start adapter sometimes
         // causes it to bounce over
