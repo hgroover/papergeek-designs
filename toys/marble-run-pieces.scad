@@ -18,7 +18,7 @@ Using default wall thickness of 2.3 and radial tolerance 0.35, we'd have 17.55 p
 /* [General] */
 
 // Which piece to print
-which_piece = "60mm"; // [20mm:20mm straight, 40mm:40mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool,trap20:20mm trap bowl,trap60:60mm trap bowl,trap120:120mm trap bowl,funnel:Top feeding funnel]
+which_piece = "60mm"; // [20mm:20mm straight, 40mm:40mm straight, 60mm:60mm straight, 120mm:120mm straight, 60x100:60mm X 100mm long drop, 60x100c:60 X 100 drop (covered), 120x150:120mm X 150mm long drop, dropstart:Start of 60x100 covered drop, dropend:End of 60x100 covered drop, pvc75out:0.75in PVC outside to outside adapter, pvc75in:0.75in PVC inside to outside adapter, pvc75thinout:0.75in thin PVC outside to outside, pvc75thinin:0.75in thin PVC inside to outside, whirlpool:120mm whirlpool,trap20:20mm trap bowl,trap60:60mm trap bowl,trap120:120mm trap bowl,funnel:Top feeding funnel,brick:Building brick adapter 2x3,brick3x3:Building brick adapter 3x3]
 // Generate supports, if applicable for selected piece
 generate_support = true;
 
@@ -345,6 +345,19 @@ module whirlpool(base_elevation)
         }
         // Add support for exit
         translate([0,-49.5,0]) cube([0.4,35,8.5]);
+        // Add wall for entry - random bouncing of marble
+        // as it exits the start adapter sometimes
+        // causes it to bounce over
+        translate([32,40,80.5])
+            rotate([12,0,36])
+                hull()
+                {
+                    cube([wall_thickness,40,8]);
+                    translate([1.5,-15,-3])
+                        sphere(r=wall_thickness/2);
+                    translate([1.5,-2,8])
+                        sphere(r=wall_thickness/2);
+                }
     }
 }
 
@@ -411,20 +424,81 @@ module trap_bowl(height)
         }
 }
 
+// Funnel cross-section
+module funnel_cross(radius, height)
+{
+    // Why is subtraction needed???
+    polygon(points=[
+        [inside_radius-0.25,0],
+        [inside_radius-0.25,interface_length+2],
+        [radius,height],
+        [radius + wall_thickness,height],
+        [radius + wall_thickness,height-2],
+        [inside_radius + wall_thickness, interface_length],
+        [inside_radius + wall_thickness,0]
+    ]);
+}
+
 // Simple funnel
 module funnel(radius)
 {
     height = radius;
-    rotate_extrude(convexity=4)
-        polygon(points=[
-            [inside_radius,0],
-            [inside_radius,interface_length+2],
-            [radius,height],
-            [radius + wall_thickness,height],
-            [radius + wall_thickness,height-2],
-            [inside_radius + wall_thickness, interface_length],
-            [inside_radius + wall_thickness,0]
-        ]);
+    if (debug)
+    {
+        intersection()
+        {
+            /*translate([0,0,20])*/ 
+                rotate_extrude(convexity=4)
+                    funnel_cross(radius, height);
+            cylinder(r=20,h=10);
+        }
+    }
+    else
+    {
+        rotate_extrude(convexity=4)
+            funnel_cross(radius, height);
+    //basic_adapter(20);
+    }
+}
+
+// Building brick (LEGO) adapter allows one to build
+// a tower out of bricks to support a marble run piece
+module brick(height,mwidth,mlength)
+{
+    // Wall thickness is 1.66
+    // Round nodes are 4.9 diameter
+    // Round nodes are spaced 3.5mm
+    // Outside for 2 nodes is 13, 21 for 3
+    brick_wall = 1.7;
+    brick_inside_w = (mwidth == 2 ? 13 : 21);
+    brick_inside_l = (mlength == 2 ? 13 : 21);
+    union()
+    {
+        difference()
+        {
+            basic_adapter(height);
+            cylinder(h=6, r=20);
+        }
+        difference()
+        {
+            hull()
+            {
+                translate([0,0,6]) cylinder(h=1, r=inside_radius+wall_thickness);
+                cube([brick_inside_w + 2 * brick_wall, brick_inside_l + 2 * brick_wall, 1], center=true);
+            }
+            hull()
+            {
+                translate([0,0,6.1]) cylinder(h=1, r=inside_radius);
+                translate([0,0,-0.1]) cube([brick_inside_w, brick_inside_l, 1], center=true);
+            }
+        }
+        translate([0,0,-4])
+            difference()
+            {
+                cube([brick_inside_w + 2 * brick_wall, brick_inside_l + 2 * brick_wall, 8], center=true);
+                cube([brick_inside_w, brick_inside_l, 10], center=true);
+            }
+    }
 }
 
 // Minimum is 11.06
@@ -485,5 +559,10 @@ if (which_piece == "trap120")
 
 if (which_piece == "funnel")
     funnel(40);
+
+if (which_piece == "brick")
+    brick(12,2,3);
+if (which_piece == "brick3x3")
+    brick(12,3,3);
 
 //cross_section(70);
