@@ -2,12 +2,16 @@
 new_fountain = 1; // [0:old fountain, 1:new fountain, 2:tubing container, 3:tubing end seal]
 // 1 to view pillars separately (with potential gaps)
 pillar_view = 0;
+// Add a hemisphere cap over fountainhead to avoid water spurting up and hopefully keep it in the basin
+fountainhead_cap = true;
 // Include Shankarji (to reference size of alcove)
 include_shiv_murti = false;
 // Add internal support pillars
 internal_support_pillars = false;
 // Add additional internal removable span supports
 internal_span_supports = true;
+// Generate supports for cave roof
+cave_roof_supports = true;
 
 /*[Hidden]*/
 // Global predefined boulder sets: radius, xscale, yscale, zscale, xoff, yoff, zoff
@@ -29,10 +33,10 @@ bset = [
 ],
 // 3: Back of roof transition slab
 [
-    [10,    10, 10, 10,     -50, 20, -10],
+    [8,    8, 8, 8,     -50, 25, -11],
+    [8,    8, 8, 8,     50, 25, -11],
     [10,    10, 10, 10,     -52, 8, 12],
     [10,    10, 10, 10,     51, 6, 12],
-    [10,    10, 10, 10,     50, 20, -11],
     [10,    100, 10, 10,    0, 20, 12],
 ],
 // 4: Roof slab
@@ -196,9 +200,125 @@ module cave_back()
     }
 }
 
+// Generate internal span supports under bottom (touching build plate)
+module generate_internal_span_supports()
+{
+    /***
+    translate([0,-36,0])
+        cube([0.4, 100, 48]);
+    translate([20,-36,0])
+        cube([0.4, 100, 48]);
+    translate([-20,-36,0])
+        cube([0.4, 100, 48]);
+    translate([40,-20,0])
+        cube([0.4, 80, 48]);
+    translate([-40,-20,0])
+        cube([0.4, 80, 48]);
+    ***/
+    // Use zigzag pattern
+    w=0.8;
+    linear_extrude(height=48)
+        polygon(points=[
+        [-40,60],
+        [-40,-20],
+        [-20,-36],
+        [-20,60],
+        [0,60],
+        [0,-36],
+        [20,-36],
+        [20,60],
+        [40,60],
+        [40,-20],
+        [40+w,-20],
+        [40+w,60+w],
+        [20-w,60+w],
+        [20-w,-36+w],
+        [0+w,-36+w],
+        [0+w,60+w],
+        [-20-w,60+w],
+        [-20-w,-36+3*w], // sharp bend inside
+        [-40+w,-20+w],
+        [-40+w,60]
+        ]);
+}
+
+// Generate branching supports for cave roof
+module generate_cave_roof_supports()
+{
+  // Bridge supports connect to both cave sides
+  translate([0,7,83.6])
+    rotate([90,0,0])
+        linear_extrude(height=0.4)
+            polygon(convexity=5, points=[
+                [-52,60],
+                [-52,106],
+                [0,106],
+                [52,106],
+                [52,60],
+                [0,102]
+                ]);
+  translate([0,14,83.6])
+    rotate([90,0,0])
+        linear_extrude(height=0.4)
+            polygon(convexity=5, points=[
+                [-52,58],
+                [-52,104],
+                [0,104],
+                [52,104],
+                [52,58],
+                [0,100]
+                ]);
+  translate([0,24,83.6])
+    rotate([90,0,0])
+        linear_extrude(height=0.4)
+            polygon(convexity=5, points=[
+                [-52,56],
+                [-52,103],
+                [0,102],
+                [52,102],
+                [52,56],
+                [0,98]
+                ]);
+  // Last two also connect to downspout
+  translate([0,32,83.6])
+    rotate([90,0,0])
+        linear_extrude(height=0.4)
+            polygon(convexity=5, points=[
+                [-52,49],
+                [-52,100.5],
+                [-8.5,99.9],
+                [-6,96.7],
+                [0,95.3],
+                [6,96.7],
+                [8.5,99.8],
+                [52,99.8],
+                [52,49],
+                [0,94]
+                ]);
+  translate([0,38.5,83.6])
+    rotate([90,0,0])
+        linear_extrude(height=0.4)
+            polygon(convexity=5, points=[
+                [-52,48],
+                [-52,99.1],
+                [-8.5,98.8],
+                [-6, 96.5],
+                [0,94],
+                [6,96.5],
+                [8.5,98.7],
+                [52,98.7],
+                [52,48],
+                [0,93]
+                ]);
+}
+
 // New fountain built up from scratch
 module new_fountain_shape()
 {
+    difference()
+    {
+        union()
+        {
     difference()
     {
         union()
@@ -228,7 +348,6 @@ module new_fountain_shape()
             translate([0,36,188])
                 sphere(r=10, $fn=60);
         }
-        cord_holes();
         // Tubing hole
         translate([0,72,-1])
             cylinder(r=8, h=230);
@@ -242,7 +361,7 @@ module new_fountain_shape()
                 cylinder(r=3, h=40);
         // Reduce volume
         translate([0,0,-4])
-            scale([0.98, 0.98, 0.99])
+            scale([0.94, 0.94, 0.99])
                 hull() import("mountain-fountain7-mountain2_003.stl");
         // Reduce material volume and add LED lighting
         // inserts accessible from bottom
@@ -267,10 +386,49 @@ module new_fountain_shape()
         // Reduce volume in 
         // vertical to horizontal transition slab
         translate([0,42,170]) 
-            scale([0.9, 0.9, 0.9])
+            scale([0.85, 0.85, 0.85])
                 boulder(bset[3]);
 
+    } // inner difference
+            // Make foot thicker so there is a continuous starting layer
+            foot_thickness = 14;
+            foot_height = 6;
+            linear_extrude(height=foot_height)
+                polygon(points=[
+                    [90,90],
+                    [-90,90],
+                    [-90,-90],
+                    [90,-90],
+                    [90-foot_thickness,90-foot_thickness],
+                    [-90+foot_thickness,90-foot_thickness],
+                    [-90+foot_thickness,-90+foot_thickness],
+                    [90-foot_thickness,-90+foot_thickness]
+                    ], paths=[
+                    [0,1,2,3],
+                    [4,5,6,7]
+                ]);
+        } // outer union
+        cord_holes();
+    } // Outer difference
+    difference()
+    {
+        // Flat surface for end of tubing
+        translate([0,72,188])
+            cylinder(r=10, h=10, $fn=80);
+        // Tubing hole (again)
+        translate([0,72,-1])
+            cylinder(r=8, h=230);
     }
+    // Add cap to contain water entry if desired
+    if (fountainhead_cap)
+        translate([0,62,199])
+            difference()
+            {
+                sphere(r=26, $fn=80);
+                sphere(r=24, $fn=80);
+                translate([0,-10,0]) rotate([25,0,0]) cube([60,36,60], center=true);
+                translate([0,0,-44]) cube([60,60,60], center=true);
+            }
     if (include_shiv_murti) translate([0,-15,-5])
         import("shankara-murudeshwar.stl", convexity=5);
     // Add internal supports for base. These would need
@@ -288,17 +446,10 @@ module new_fountain_shape()
     }
     if (internal_span_supports)
     {
-        translate([0,-36,0])
-            cube([0.4, 100, 40]);
-        translate([20,-36,0])
-            cube([0.4, 100, 40]);
-        translate([-20,-36,0])
-            cube([0.4, 100, 40]);
-        translate([40,-20,0])
-            cube([0.4, 80, 40]);
-        translate([-40,-20,0])
-            cube([0.4, 80, 40]);
+        generate_internal_span_supports();
     }
+    if (cave_roof_supports)
+        generate_cave_roof_supports();
 }
 
 // Test tubing adapter: 2 = feed tube that we have to be able to fish the tubing through; 3 = sealing adapter that we'll hotglue on the end
