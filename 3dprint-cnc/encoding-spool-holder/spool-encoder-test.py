@@ -113,8 +113,8 @@ while True:
       net_sum = ccw_sum - cw_sum
     else: # CW is normal direction for feeding
       net_sum = cw_sum - ccw_sum
-    if m_count > 0:
-      print('{0} {1}/{2} N={3} net {4}'.format(serial, cw_sum, ccw_sum, m_count, net_sum))
+    #if m_count > 0:
+    #  print('{0} {1}/{2} N={3} net {4}'.format(serial, cw_sum, ccw_sum, m_count, net_sum))
     rate_sum = 0.0
     # Note odd expression to cover [8,7,6,5,4,3,2,1,0]
     for n in range(8,-1,-1):
@@ -122,5 +122,5 @@ while True:
       rate_sum = rate_sum + feed_motion[n]
     feed_motion[0] = net_sum / SAMPLE_RATE
     moving_avg = (rate_sum + feed_motion[0]) / 10
-    print('rate {0} moving avg {1} sum {3} set {2}'.format(feed_motion[0], moving_avg, feed_motion, rate_sum + feed_motion[0]))
+    print('rate {0} moving_avg {1} sum {3} set {2}'.format(feed_motion[0], moving_avg, feed_motion, rate_sum + feed_motion[0]))
     sys.stdout.flush()
