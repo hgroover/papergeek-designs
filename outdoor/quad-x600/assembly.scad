@@ -1,3 +1,9 @@
+/* [Parts] */
+render_strut = 1;
+render_end = 0;
+render_body = 0;
+
+/* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole. Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
 screw_radius = 1.8;
 screw_block_radius = 3;
@@ -11,6 +17,53 @@ leg_height = 90;
 leg_radius = 10;
 leg_wall = 2;
 
+// Outermost arch base and height values
+arch_base = 20;
+arch_height = 30;
+
+// Thickness of arch wall
+arch_wall = 2.5;
+
+// Strut parameters
+strut_length = 150;
+strut_leg_end_distance = 40;
+
+// Length of mating section protrusion and overlap, and tolerance
+section_mating = 30;
+section_mating_overlap = 30;
+section_mating_tolerance = 0.2;
+
+// Steps determine resolution and must be an 
+// even integer
+arch_steps = 32;
+
+/* [Hidden] */
+
+// Parametric arch uses the basic formula of y=Ax^2
+// but A is derived from Vy (vertex y) and Zx (base crossing x)
+// A = 1 / (Zx / sqrt(Vy)) ^ 2
+module arch_section(walls, length, tolerance)
+{
+    abase = arch_base - 2 * (walls * arch_wall - tolerance);
+    aheight = arch_height - walls * arch_wall * arch_height / arch_base - tolerance;
+    Zx = abase / 2;
+    Zx_term1 = Zx / sqrt(aheight);
+    A = 1 / (Zx_term1 * Zx_term1);
+    echo("Base=", abase, "Height=", aheight, "A=", A);
+    linear_extrude(height = length, convexity=5)
+      arch_poly(abase, aheight, A);
+}
+
+// Create inverted arch cross-section polygon
+module arch_poly(base,height,A)
+{
+    bf = base / arch_steps;
+    polygon(points=[
+    for (n= [-arch_steps/2:arch_steps/2])
+        [bf*n, A*bf*bf*n*n - height]
+    ]);
+}
+
 // Outside screw mount with specified Y offset
 module screw_mount(is_mask, y_offset)
 {
@@ -19,6 +72,18 @@ module screw_mount(is_mask, y_offset)
     rotate([0,0,-45]) 
         rotate([-180,0,0]) 
             translate([-L/2,y_offset,screw_z])
+                        rotate([0,90,0])
+                            cylinder(r=R, h=L, $fn=50);
+}
+
+// New screw_mount() without 45 degree rotation
+module new_screw_mount(is_mask, y_offset)
+{
+    L = (is_mask ? screw_mask_length : screw_length);
+    R = (is_mask ? screw_radius : screw_block_radius);
+    //rotate([0,0,-45]) 
+        //rotate([-180,0,0]) 
+            translate([-L/2,-screw_z, y_offset])
                         rotate([0,90,0])
                             cylinder(r=R, h=L, $fn=50);
 }
@@ -49,6 +114,31 @@ module strut_leg(is_mask, y_offset)
                 }
 }
 
+// New strut leg without 45 degree rotation
+module new_strut_leg(is_mask, y_offset)
+{
+    translate([0,0,strut_length - strut_leg_end_distance])
+        rotate([90,0,0])
+                if (is_mask)
+                    translate([0,0,3 * leg_wall]) cylinder(r=leg_radius - 2 * leg_wall, h=leg_height/2);
+                else
+                difference()
+                {
+                    cylinder(r=leg_radius, h=leg_height, $fn=50);
+                    translate([0,0,-leg_wall])
+                        cylinder(r=leg_radius - leg_wall, h=leg_height - 3 * leg_wall, $fn=50);
+                    // Make some LED holes also
+                    translate([0,0,50])
+                        cylinder(r=leg_radius - 2 * leg_wall, h=leg_height, $fn=32);
+                    translate([-leg_radius * 1.5,0,leg_height-10])
+                        rotate([0,90,0])
+                            cylinder(r=3, h=3*leg_radius);
+                    translate([0,leg_radius * 1.5,leg_height-10])
+                        rotate([90,0,0])
+                            cylinder(r=3, h=3*leg_radius);
+                }
+}
+
 module end_unit()
 {
     rotate([180,0,0])
@@ -71,6 +161,71 @@ module end_unit()
         }
         import("oc-end-opening-cutter.stl");
     }
+}
+
+module new_end_unit()
+{
+    translate([0,0,strut_length])
+        difference()
+        {
+            union()
+            {
+                difference()
+                {
+                    union()
+                    {
+                        arch_section(0,50,0);
+                        new_screw_mount(false,10);
+                    }
+                    translate([0,-arch_wall*0.75,-1]) arch_section(1, 50 + 1 - arch_wall, 0);
+                    new_screw_mount(true, 10);
+                }
+                // Motor mount
+                translate([0,-arch_wall * 1.25,50+8+3.0])
+                rotate([-90,0,0])
+                difference()
+                {
+                    cylinder(r=15, h=arch_wall * 1.25, $fn=50);
+                    translate([0,-1,-0.2])
+                        cylinder(r=4.5, h=arch_wall * 1.5, $fn=50);
+                    // Motor holes are spaced 19 and 16mm apart.
+                    // Looking down from the top, the longer
+                    // (19mm) axis will be at the bottom left
+                    // where the mount meets the end piece.
+                    a = 9.5 * sin(45);
+                    b = 9.5 * cos(45);
+                    c = 8 * sin(45);
+                    d = 8 * cos(45);
+                    //translate([5.67,5.75-0.87,-0.2])
+                    translate([-a,-1-b,-0.2])
+                        cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
+                    //translate([-6.75,5.9,-0.2])
+                    translate([a,-1+b,-0.2])
+                        cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
+                    //translate([-5.70,-6.5,-0.2])
+                    translate([-d,-1+c,-0.2])
+                        cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
+                    //translate([6.75,-7.5,-0.2])
+                    translate([d,-1-c,-0.2])
+                        cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
+                }
+                // Curved motor mount side supports
+                translate([0,-10, 50 + 8 + 3])
+                rotate([-90,0,0]) difference()
+                {
+                    cylinder(r=15, h=10, $fn=50);
+                    translate([0,0,-0.1]) cylinder(r=13, h=12, $fn=50);
+                    translate([0,0,-1]) rotate([-20,0,0]) cube([40,40,10], center=true);
+                }
+            }
+            // Cut end hole
+            translate([0,-20,50-5])
+                cylinder(r=3.5, h=10, $fn=50);
+            // Cut wire exit hole
+            translate([0,0,50-12])
+              rotate([20,0])
+                cube([10,8,8], center=true);
+        }
 }
 
 module strut_unit()
@@ -103,7 +258,37 @@ module strut_unit()
               import("oc-strut-endmate-mask.stl");
             }
         }
-        screw_mount(true,244);
+        #screw_mount(true,244);
+    }
+}
+
+// Totally parametric strut unit
+module new_strut()
+{
+    difference()
+    {
+        union()
+        {
+            difference()
+            {
+                union()
+                {
+                    arch_section(0, strut_length, 0);
+                    new_screw_mount(false,10);
+                    new_strut_leg(false,strut_length - 36);
+                }
+                translate([0,-arch_wall*0.75,-1]) arch_section(1, strut_length + 2, 0);
+                new_screw_mount(true,10);
+                new_strut_leg(true,strut_length - 36);
+            }
+            translate([0,-(arch_wall*0.75 + section_mating_tolerance),strut_length - section_mating_overlap]) mating(false);
+            intersection()
+            {
+                new_screw_mount(false,strut_length + 10);
+                translate([0,-(arch_wall*0.75 + section_mating_tolerance),strut_length - section_mating_overlap]) mating(true);
+            }
+        }
+        new_screw_mount(true,strut_length + 10);
     }
 }
 
@@ -135,6 +320,61 @@ module body_unit()
             }
 }
 
-end_unit();
-//strut_unit();
-//body_unit();
+// Parametric body. This is an X drone (not +) which means
+// the front left and front right arms are at a 45 degree
+// angle to the direction of travel.
+module new_body()
+{
+    // Side of a regular octagon width 180
+    g = 180 / (1 + sqrt(2));
+    f = (180 - g) / 2;
+    echo("g=", g, "f=", f);
+    linear_extrude(convexity=4, height=8)
+        polygon(points=[
+        [f,0],
+        [0,f],
+        [0,f+g],
+        [f,2*f+g],
+        [f+g,2*f+g],
+        [2*f+g,f+g],
+        [2*f+g,f],
+        [f+g,0]
+        ]);
+}
+
+// Mating section
+module mating(is_mask)
+{
+    difference()
+    {
+        arch_section(1, section_mating_overlap, 0);
+        if (!is_mask) translate([0,-arch_wall*0.75,-1]) arch_section(2, section_mating_overlap+2, 0);
+    }
+    translate([0,0,section_mating_overlap]) difference()
+    {
+        arch_section(1, section_mating, section_mating_tolerance);
+        if (!is_mask) translate([0,-(arch_wall*0.75 + section_mating_tolerance),-1]) arch_section(2, section_mating+2, 0);
+    }
+}
+
+if (render_strut)
+{
+  rotate([-90,0,0]) 
+    new_strut();
+//  translate([40,-88,0]) strut_unit();
+}
+
+if (render_end)
+{
+  rotate([-90,0,0])
+    new_end_unit();
+//translate([0,-88,2])
+//  #end_unit();
+}
+
+if (render_body)
+{
+    //rotate([0,0,45])
+    new_body();
+    //#translate([0,-88,0]) body_unit();
+}
