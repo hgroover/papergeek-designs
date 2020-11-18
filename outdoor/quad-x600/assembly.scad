@@ -2,15 +2,17 @@
 render_strut = 1;
 render_end = 0;
 render_body = 0;
+render_arch_test = 0;
 
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole. Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
 screw_radius = 1.8;
-screw_block_radius = 3;
+// Screw block crosses the inside mating piece and also extends outside the outer piece. It lends strength to sidewalls which may otherwise suffer layer separation under stress
+screw_block_radius = 6;
 screw_length = 21;
 screw_mask_length = screw_length + 0.2;
-// Z offset for screw holes. Should merge screw block with structure without cutting into structure with screw shaft hole
-screw_z = 6; 
+// Z offset for screw holes. Should merge screw block with structure without cutting into structure with screw shaft hole. Most be at least 2 * screw_radius above arch_wall
+screw_z = 9; 
 
 // Leg height is measured from top of motor mount
 leg_height = 90;
@@ -22,7 +24,10 @@ arch_base = 20;
 arch_height = 30;
 
 // Thickness of arch wall
-arch_wall = 2.5;
+arch_wall = 3.3;
+
+// Coefficient applied to arch_wall for mating pieces
+arch_mating_coefficient = 1.0;
 
 // Strut parameters
 strut_length = 150;
@@ -31,7 +36,8 @@ strut_leg_end_distance = 40;
 // Length of mating section protrusion and overlap, and tolerance
 section_mating = 30;
 section_mating_overlap = 30;
-section_mating_tolerance = 0.2;
+// This should fit but may require sanding to make smooth
+section_mating_tolerance = 0.28;
 
 // Steps determine resolution and must be an 
 // even integer
@@ -44,12 +50,15 @@ arch_steps = 32;
 // A = 1 / (Zx / sqrt(Vy)) ^ 2
 module arch_section(walls, length, tolerance)
 {
-    abase = arch_base - 2 * (walls * arch_wall - tolerance);
-    aheight = arch_height - walls * arch_wall * arch_height / arch_base - tolerance;
+    abase = arch_base - 2 * (walls * arch_wall + tolerance);
+    // Subtract apex from height with height / base
+    // proportion, and subtract base as-is
+    aheight = arch_height - walls * arch_wall * arch_height / arch_base - walls * arch_wall - tolerance;
     Zx = abase / 2;
     Zx_term1 = Zx / sqrt(aheight);
     A = 1 / (Zx_term1 * Zx_term1);
     echo("Base=", abase, "Height=", aheight, "A=", A);
+    translate([0,-tolerance - walls * arch_wall,0])
     linear_extrude(height = length, convexity=5)
       arch_poly(abase, aheight, A);
 }
@@ -177,7 +186,7 @@ module new_end_unit()
                         arch_section(0,50,0);
                         new_screw_mount(false,10);
                     }
-                    translate([0,-arch_wall*0.75,-1]) arch_section(1, 50 + 1 - arch_wall, 0);
+                    translate([0,0,-1]) arch_section(1, 50 + 1 - arch_wall, 0);
                     new_screw_mount(true, 10);
                 }
                 // Motor mount
@@ -222,9 +231,9 @@ module new_end_unit()
             translate([0,-20,50-5])
                 cylinder(r=3.5, h=10, $fn=50);
             // Cut wire exit hole
-            translate([0,0,50-12])
+            #translate([0,-1,50-12])
               rotate([20,0])
-                cube([10,8,8], center=true);
+                cube([10,10,8], center=true);
         }
 }
 
@@ -277,15 +286,15 @@ module new_strut()
                     new_screw_mount(false,10);
                     new_strut_leg(false,strut_length - 36);
                 }
-                translate([0,-arch_wall*0.75,-1]) arch_section(1, strut_length + 2, 0);
+                translate([0,0,-1]) arch_section(1, strut_length + 2, 0);
                 new_screw_mount(true,10);
                 new_strut_leg(true,strut_length - 36);
             }
-            translate([0,-(arch_wall*0.75 + section_mating_tolerance),strut_length - section_mating_overlap]) mating(false);
+            translate([0,0,strut_length - section_mating_overlap]) mating(false);
             intersection()
             {
                 new_screw_mount(false,strut_length + 10);
-                translate([0,-(arch_wall*0.75 + section_mating_tolerance),strut_length - section_mating_overlap]) mating(true);
+                translate([0,0,strut_length - section_mating_overlap]) mating(true);
             }
         }
         new_screw_mount(true,strut_length + 10);
@@ -348,12 +357,12 @@ module mating(is_mask)
     difference()
     {
         arch_section(1, section_mating_overlap, 0);
-        if (!is_mask) translate([0,-arch_wall*0.75,-1]) arch_section(2, section_mating_overlap+2, 0);
+        if (!is_mask) translate([0,0,-1]) arch_section(2, section_mating_overlap+2, 0);
     }
     translate([0,0,section_mating_overlap]) difference()
     {
         arch_section(1, section_mating, section_mating_tolerance);
-        if (!is_mask) translate([0,-(arch_wall*0.75 + section_mating_tolerance),-1]) arch_section(2, section_mating+2, 0);
+        if (!is_mask) translate([0,0,-1]) arch_section(2, section_mating+2, 0);
     }
 }
 
@@ -377,4 +386,23 @@ if (render_body)
     //rotate([0,0,45])
     new_body();
     //#translate([0,-88,0]) body_unit();
+}
+
+if (render_arch_test)
+{
+    if (render_arch_test == 1)
+    translate([30,0,0])
+    difference()
+    {
+        arch_section(0,30,0);
+        translate([0,0,-0.1]) arch_section(1,31,0);
+    }
+    if (render_arch_test == 2)
+    translate([60,0,0])
+    difference()
+    {
+        echo("inner tolerance:", section_mating_tolerance);
+        arch_section(1,30,section_mating_tolerance);
+        translate([0,0,-0.1]) arch_section(2,31,0);
+    }
 }
