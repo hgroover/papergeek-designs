@@ -38,7 +38,6 @@ pin_a = Button(A_PIN)                   # Rotary encoder pin A connected to GPIO
 pin_b = Button(B_PIN)                   # Rotary encoder pin B connected to GPIO26
 #pin_c = Button(13) # Third pin for debugging
 
-# Testing for if pin_b.is_pressed leads to false multiples
 # There will be many repeated events which we need to tabulate, e.g.
 # 1 2 1 2 1 2 1 -1 2 1 2 1 2 1 2 -2 1 -1 2 (ccw, cw, cw, cw, ccw) 
 def pin_a_rising():                    # Pin A event handler
@@ -79,6 +78,8 @@ while True:
     ccw_sum = 0
     net_sum = 0
     m_count = 0
+    cw_rpt = 0
+    ccw_rpt = 0
     while not eventq.empty():
       message = None
       try:
@@ -88,20 +89,25 @@ while True:
       if message != None:
         # A (CCW) uses -1 rising, -2 falling
         # B (CW) uses 1 rising, 2 falling
+        # There will also be many pulses without the other high
         if message == -1:
            if b_hi:
               ccw_sum = ccw_sum + 1
+           else:
+              ccw_rpt = ccw_rpt + 1
            a_hi = True
         elif message == 1:
            if a_hi:
               cw_sum = cw_sum + 1
+           else:
+              cw_rpt = cw_rpt + 1
            b_hi = True
         elif message == -2:
            a_hi = False
         elif message == 2:
            b_hi = False
         #print('[{0}] {1} {2}'.format(serial, message[0], message[1]))
-        #print('{0} {1}'.format(serial, message))
+        #print('{0} {1} {2} {3}'.format(serial, message, cw_sum, ccw_sum))
         m_count = m_count + 1
         #if message == CW_SIGN:
         #  cw_sum = cw_sum + 1
@@ -109,10 +115,16 @@ while True:
         #  ccw_sum = ccw_sum + 1
         #net_sum = net_sum + message
     serial = serial + 1
+    # We count repeats but they need to be filtered out.
+    # A repeat indicates the switch is resting at a trigger
+    # point but is not crossing to the next detente position,
+    # therefore does not indicate rotation.
     if FEED_SIGN > 0: # CCW is normal direction for feeding
       net_sum = ccw_sum - cw_sum
+      #net_sum = net_sum + ccw_rpt - cw_rpt
     else: # CW is normal direction for feeding
       net_sum = cw_sum - ccw_sum
+      #net_sum = net_sum + cw_rpt - ccw_rpt
     #if m_count > 0:
     #  print('{0} {1}/{2} N={3} net {4}'.format(serial, cw_sum, ccw_sum, m_count, net_sum))
     rate_sum = 0.0
@@ -122,5 +134,5 @@ while True:
       rate_sum = rate_sum + feed_motion[n]
     feed_motion[0] = net_sum / SAMPLE_RATE
     moving_avg = (rate_sum + feed_motion[0]) / 10
-    print('rate {0} moving_avg {1} sum {3} set {2}'.format(feed_motion[0], moving_avg, feed_motion, rate_sum + feed_motion[0]))
+    print('rate {0} moving_avg {1} sum {3} ccw {4}/{5} cw {6}/{7} set {2}'.format(feed_motion[0], moving_avg, feed_motion, rate_sum + feed_motion[0], ccw_sum, ccw_rpt, cw_sum, cw_rpt))
     sys.stdout.flush()
