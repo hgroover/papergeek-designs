@@ -148,30 +148,6 @@ module new_strut_leg(is_mask, y_offset)
                 }
 }
 
-module end_unit()
-{
-    rotate([180,0,0])
-    rotate([0,0,45])
-    difference()
-    {
-        union()
-        {
-            import("oc-end-motormount.stl");
-            difference()
-            {
-                union()
-                {
-                    import("oc-end.stl");
-                    screw_mount(false, 244);
-                }
-                import("oc-end-hollow-cutter.stl");
-                screw_mount(true,244);
-            }
-        }
-        import("oc-end-opening-cutter.stl");
-    }
-}
-
 module new_end_unit()
 {
     translate([0,0,strut_length])
@@ -205,16 +181,12 @@ module new_end_unit()
                     b = 9.5 * cos(45);
                     c = 8 * sin(45);
                     d = 8 * cos(45);
-                    //translate([5.67,5.75-0.87,-0.2])
                     translate([-a,-1-b,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    //translate([-6.75,5.9,-0.2])
                     translate([a,-1+b,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    //translate([-5.70,-6.5,-0.2])
                     translate([-d,-1+c,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    //translate([6.75,-7.5,-0.2])
                     translate([d,-1-c,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
                 }
@@ -231,7 +203,7 @@ module new_end_unit()
             translate([0,-20,50-5])
                 cylinder(r=3.5, h=10, $fn=50);
             // Cut wire exit hole
-            #translate([0,-1,50-12])
+            translate([0,-1,50-12])
               rotate([20,0])
                 cube([10,10,8], center=true);
         }
@@ -377,8 +349,6 @@ if (render_end)
 {
   rotate([-90,0,0])
     new_end_unit();
-//translate([0,-88,2])
-//  #end_unit();
 }
 
 if (render_body)
