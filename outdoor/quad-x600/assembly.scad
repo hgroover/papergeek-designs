@@ -3,6 +3,7 @@ render_strut = 1;
 render_end = 0;
 render_body = 0;
 render_arch_test = 0;
+render_span_test = 0;
 
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole. Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
@@ -365,7 +366,6 @@ if (render_strut)
 {
   rotate([-90,0,0]) 
     new_strut();
-//  translate([40,-88,0]) strut_unit();
 }
 
 if (render_end)
@@ -376,14 +376,25 @@ if (render_end)
 
 if (render_body)
 {
-    body_width = airframe_span - 2 * (strut_length + end_length);
     new_body();
     //#translate([0,-88,0]) body_unit();
+}
+
+if (render_span_test)
+{
+    body_width = airframe_span - 2 * (strut_length + end_length);
     #translate([0,-body_width,0]) rotate([-90,0,180])
       new_strut();
     #translate([0,-body_width,0])
         rotate([-90,0,180])
             new_end_unit();
+    if (render_end == 0)
+        rotate([-90,0,0])
+            new_end_unit();
+    if (render_strut == 0)
+        rotate([-90,0,0])
+            new_strut();
+    // Airframe span guide
     #translate([0,strut_length + end_length,0])
         rotate([90,0,0])
             cylinder(r=40,h=airframe_span);
