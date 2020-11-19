@@ -33,6 +33,12 @@ arch_mating_coefficient = 1.0;
 strut_length = 150;
 strut_leg_end_distance = 40;
 
+// Span from one prop shaft to the opposite determines body width (the central body is a regular octagon)
+airframe_span = 600;
+
+// Length of end from joining strut to center of prop shaft. Should be close to 60 but may be adjusted to keep body width to a multiple of 10 or some other neat value.
+end_length = 60;
+
 // Length of mating section protrusion and overlap, and tolerance
 section_mating = 30;
 section_mating_overlap = 30;
@@ -161,19 +167,20 @@ module new_end_unit()
                 {
                     union()
                     {
-                        arch_section(0,50,0);
+                        arch_section(0,end_length-12,0);
                         new_screw_mount(false,10);
                     }
-                    translate([0,0,-1]) arch_section(1, 50 + 1 - arch_wall, 0);
+                    translate([0,0,-1]) arch_section(1, end_length - 12 + 1 - arch_wall, 0);
                     new_screw_mount(true, 10);
                 }
-                // Motor mount
-                translate([0,-arch_wall * 1.25,50+8+3.0])
+                // Motor mount - center of motor (prop shaft)
+                // is at end_length from end of strut
+                translate([0,-arch_wall * 1.25,end_length])
                 rotate([-90,0,0])
                 difference()
                 {
                     cylinder(r=15, h=arch_wall * 1.25, $fn=50);
-                    translate([0,-1,-0.2])
+                    translate([0,0,-0.2])
                         cylinder(r=4.5, h=arch_wall * 1.5, $fn=50);
                     // Motor holes are spaced 19 and 16mm apart.
                     // Looking down from the top, the longer
@@ -183,17 +190,17 @@ module new_end_unit()
                     b = 9.5 * cos(45);
                     c = 8 * sin(45);
                     d = 8 * cos(45);
-                    translate([-a,-1-b,-0.2])
+                    translate([-a,-b,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    translate([a,-1+b,-0.2])
+                    translate([a,b,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    translate([-d,-1+c,-0.2])
+                    translate([-d,c,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
-                    translate([d,-1-c,-0.2])
+                    translate([d,-c,-0.2])
                         cylinder(r=1.7, h=arch_wall * 1.5, $fn=50);
                 }
                 // Curved motor mount side supports
-                translate([0,-10, 50 + 8 + 3])
+                translate([0,-10, end_length])
                 rotate([-90,0,0]) difference()
                 {
                     cylinder(r=15, h=10, $fn=50);
@@ -202,10 +209,10 @@ module new_end_unit()
                 }
             }
             // Cut end hole
-            translate([0,-20,50-5])
-                cylinder(r=3.5, h=10, $fn=50);
+            translate([0,-20,end_length-12-6])
+                cylinder(r=3.0, h=10, $fn=50);
             // Cut wire exit hole
-            translate([0,-1,50-12])
+            translate([0,-2,end_length-12-12])
               rotate([20,0])
                 cube([10,10,8], center=true);
         }
@@ -308,20 +315,23 @@ module body_unit()
 // angle to the direction of travel.
 module new_body()
 {
+    // Determine body width
+    body_width = airframe_span - 2 * (strut_length + 61);
     // Side of a regular octagon width 180
-    g = 180 / (1 + sqrt(2));
-    f = (180 - g) / 2;
-    echo("g=", g, "f=", f);
+    g = body_width / (1 + sqrt(2));
+    f = (body_width - g) / 2;
+    echo("bw=", body_width, "g=", g, "f=", f);
     linear_extrude(convexity=4, height=8)
+        // Points run clockwise
         polygon(points=[
-        [f,0],
-        [0,f],
-        [0,f+g],
-        [f,2*f+g],
-        [f+g,2*f+g],
-        [2*f+g,f+g],
-        [2*f+g,f],
-        [f+g,0]
+        [g/2,0],
+        [g/2+f,-f],
+        [g/2+f,-f-g],
+        [g/2,-2*f-g],
+        [-g/2,-2*f-g],
+        [-g/2-f,-f-g],
+        [-g/2-f,-f],
+        [-g/2,0]
         ]);
 }
 
@@ -366,9 +376,17 @@ if (render_end)
 
 if (render_body)
 {
-    //rotate([0,0,45])
+    body_width = airframe_span - 2 * (strut_length + end_length);
     new_body();
     //#translate([0,-88,0]) body_unit();
+    #translate([0,-body_width,0]) rotate([-90,0,180])
+      new_strut();
+    #translate([0,-body_width,0])
+        rotate([-90,0,180])
+            new_end_unit();
+    #translate([0,strut_length + end_length,0])
+        rotate([90,0,0])
+            cylinder(r=40,h=airframe_span);
 }
 
 if (render_arch_test)
