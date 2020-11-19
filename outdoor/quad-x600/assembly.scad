@@ -38,6 +38,8 @@ section_mating = 30;
 section_mating_overlap = 30;
 // This should fit but may require sanding to make smooth
 section_mating_tolerance = 0.28;
+// Generate supports for mating sections
+section_mating_supports = 1;
 
 // Steps determine resolution and must be an 
 // even integer
@@ -335,6 +337,17 @@ module mating(is_mask)
     {
         arch_section(1, section_mating, section_mating_tolerance);
         if (!is_mask) translate([0,0,-1]) arch_section(2, section_mating+2, 0);
+    }
+    if (section_mating_supports)
+    {
+        for (n=[-6,-4,-2,0,2,4,6])
+        translate([n*1.08,0,section_mating+0.5])
+        linear_extrude(convexity=3, height=section_mating)
+            polygon(points=[
+                    [-1,0],
+                    [1,0],
+                    [0,-arch_wall - section_mating_tolerance]
+                    ]);
     }
 }
 
