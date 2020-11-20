@@ -1,7 +1,7 @@
 /* [Parts] */
-render_strut = 1;
+render_strut = 0;
 render_end = 0;
-render_body = 0;
+render_body = 1;
 render_arch_test = 0;
 render_span_test = 0;
 
@@ -82,18 +82,6 @@ module arch_poly(base,height,A)
     ]);
 }
 
-// Outside screw mount with specified Y offset
-module screw_mount(is_mask, y_offset)
-{
-    L = (is_mask ? screw_mask_length : screw_length);
-    R = (is_mask ? screw_radius : screw_block_radius);
-    rotate([0,0,-45]) 
-        rotate([-180,0,0]) 
-            translate([-L/2,y_offset,screw_z])
-                        rotate([0,90,0])
-                            cylinder(r=R, h=L, $fn=50);
-}
-
 // New screw_mount() without 45 degree rotation
 module new_screw_mount(is_mask, y_offset)
 {
@@ -104,32 +92,6 @@ module new_screw_mount(is_mask, y_offset)
             translate([-L/2,-screw_z, y_offset])
                         rotate([0,90,0])
                             cylinder(r=R, h=L, $fn=50);
-}
-
-// Strut leg at specified Y offset, or connecting hole mask
-module strut_leg(is_mask, y_offset)
-{
-    rotate([0,0,-45])
-        rotate([-180,0,0])
-            translate([0,200,0])
-                if (is_mask)
-                    translate([0,0,3 * leg_wall]) cylinder(r=leg_radius - 2 * leg_wall, h=leg_height/2);
-                else
-                difference()
-                {
-                    cylinder(r=leg_radius, h=leg_height, $fn=50);
-                    translate([0,0,-leg_wall])
-                        cylinder(r=leg_radius - leg_wall, h=leg_height - 3 * leg_wall, $fn=50);
-                    // Make some LED holes also
-                    translate([0,0,50])
-                        cylinder(r=leg_radius - 2 * leg_wall, h=leg_height, $fn=32);
-                    translate([-leg_radius * 1.5,0,leg_height-10])
-                        rotate([0,90,0])
-                            cylinder(r=3, h=3*leg_radius);
-                    #translate([0,leg_radius * 1.5,leg_height-10])
-                        rotate([90,0,0])
-                            cylinder(r=3, h=3*leg_radius);
-                }
 }
 
 // New strut leg without 45 degree rotation
@@ -247,34 +209,6 @@ module new_strut()
         }
         new_screw_mount(true,strut_length + 10);
     }
-}
-
-module body_unit()
-{
-    rotate([180,0,0])
-        rotate([0,0,45])
-            union()
-            {
-    import("oc-body-base.stl");
-                difference()
-                {
-                    union()
-                    {
-                        import("oc-body-mating-bl.stl");
-                        intersection()
-                        {
-                            screw_mount(false,100);
-                            scale([0.95,0.95,0.95])
-                                hull()
-                                    import("oc-body-mating-bl.stl");
-                        }
-                    }
-                    screw_mount(true,100);
-                }
-    import("oc-body-mating-br.stl");
-    import("oc-body-mating-fl.stl");
-    import("oc-body-mating-fr.stl");
-            }
 }
 
 // Add a single body mating section
@@ -408,7 +342,6 @@ if (render_body)
 {
     //rotate([0,0,render_span_test==0 ? 45 : 0])
     new_body();
-    //#translate([0,-88,0]) body_unit();
 }
 
 if (render_span_test)
