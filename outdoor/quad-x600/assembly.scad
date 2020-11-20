@@ -219,40 +219,6 @@ module new_end_unit()
         }
 }
 
-module strut_unit()
-{
-    rotate([180,0,0])
-        rotate([0,0,45])
-    difference()
-    {
-        union()
-        {
-            union()
-            {
-                difference()
-                {
-                    union()
-                    {
-                        import("oc-strut.stl");
-                        screw_mount(false,100);
-                        strut_leg(false,200);
-                    }
-                    import("oc-strut-hollow-cutter.stl");
-                    screw_mount(true,100);
-                    strut_leg(true,200);
-                }
-                import("oc-strut-endmate.stl");
-            }
-            intersection()
-            {
-              screw_mount(false,244);
-              import("oc-strut-endmate-mask.stl");
-            }
-        }
-        #screw_mount(true,244);
-    }
-}
-
 // Totally parametric strut unit
 module new_strut()
 {
@@ -311,6 +277,30 @@ module body_unit()
             }
 }
 
+// Add a single body mating section
+module body_mating()
+{
+    difference()
+    {
+        union()
+        {
+            translate([0,-section_mating_overlap,0])
+                rotate([-90,0,0])
+                    mating(false);
+            intersection()
+            {
+                translate([0,19,0])
+                    new_screw_mount(false, 9);
+                translate([0,-section_mating_overlap,0])
+                    rotate([-90,0,0])
+                        mating(true);
+            }
+        }
+        translate([0,19,0])
+            new_screw_mount(true, 9);
+    }
+}
+
 // Parametric body. This is an X drone (not +) which means
 // the front left and front right arms are at a 45 degree
 // angle to the direction of travel.
@@ -318,10 +308,13 @@ module new_body()
 {
     // Determine body width
     body_width = airframe_span - 2 * (strut_length + 61);
-    // Side of a regular octagon width 180
+    // Side of a regular octagon, derived from width
     g = body_width / (1 + sqrt(2));
     f = (body_width - g) / 2;
+    hc = 7.5;
     echo("bw=", body_width, "g=", g, "f=", f);
+    difference()
+    {
     linear_extrude(convexity=4, height=8)
         // Points run clockwise
         polygon(points=[
@@ -334,6 +327,43 @@ module new_body()
         [-g/2-f,-f],
         [-g/2,0]
         ]);
+        // Map of hexagonal cells
+        hm = [
+        [0,0,0,1,1,0,1,1,0,0,0],
+        [0,0,1,1,0,0,1,1,0,0,0],
+        [0,0,1,1,1,1,1,1,1,0,0],
+        [1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,1,1,1,1,1,1,1,0,0],
+        [0,0,1,1,1,1,1,1,0,0,0],
+        [0,0,1,1,1,1,1,1,1,0,0],
+        [1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,1,1,1,0,1,1,1,0,0],
+        [0,0,1,1,0,0,1,1,0,0,0],
+        [0,0,0,1,1,0,1,1,0,0,0]
+        ];
+        for (x=[0:10])
+            for (y=[0:10])
+            {
+                if (hm[x][y])
+                    translate([-body_width/2 + 15 + x *2 * hc,-14-y*2*hc - (x%2) * 7.5,-1])
+                    #cylinder(r=hc,h=10,$fn=6);
+            }
+        // Add power distro board 50.5
+        // with 8x8 corner insets
+        translate([0,(-body_width-50.5)/2,0])
+        cube([50.5, 50.5, 20], center=true);
+    }
+    // Add mating sections
+    body_mating();
+    translate([body_width/2,-body_width/2,0])
+        rotate([0,0,-90])
+            body_mating();
+    translate([0,-body_width,0])
+        rotate([0,0,-180])
+            body_mating();
+    translate([-body_width/2,-body_width/2,0])
+        rotate([0,0,-270])
+            body_mating();
 }
 
 // Mating section
@@ -376,6 +406,7 @@ if (render_end)
 
 if (render_body)
 {
+    //rotate([0,0,render_span_test==0 ? 45 : 0])
     new_body();
     //#translate([0,-88,0]) body_unit();
 }
