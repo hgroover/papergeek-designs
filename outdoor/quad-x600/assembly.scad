@@ -27,6 +27,9 @@ arch_height = 30;
 // Thickness of arch wall
 arch_wall = 3.3;
 
+// Body main platform thickness
+body_platform_thickness = 8;
+
 // Coefficient applied to arch_wall for mating pieces
 arch_mating_coefficient = 1.0;
 
@@ -66,7 +69,7 @@ module arch_section(walls, length, tolerance)
     Zx = abase / 2;
     Zx_term1 = Zx / sqrt(aheight);
     A = 1 / (Zx_term1 * Zx_term1);
-    echo("Base=", abase, "Height=", aheight, "A=", A);
+    //echo("Base=", abase, "Height=", aheight, "A=", A);
     translate([0,-tolerance - walls * arch_wall,0])
     linear_extrude(height = length, convexity=5)
       arch_poly(abase, aheight, A);
@@ -212,8 +215,15 @@ module new_strut()
 }
 
 // Add a single body mating section
-module body_mating()
+module body_mating(body_width, quadrant)
 {
+    hw = body_width / 2;
+    xd = (quadrant % 2 == 0) ? 0 : ((quadrant == 3) ? -hw : hw);
+    yd = (quadrant % 2 == 1) ? 0 : ((quadrant == 2) ? -hw : hw);
+    zr = (quadrant % 2 == 1) ? (quadrant == 3 ? -270 : -90) : ((quadrant == 0) ? 0 : -180);
+    rotate([0,0,-45])
+    translate([xd,yd])
+        rotate([0,0,zr])
     difference()
     {
         union()
@@ -235,13 +245,80 @@ module body_mating()
     }
 }
 
+function airframe_body_width() = (
+    airframe_span - 2 * (strut_length + end_length)
+);
+
+// Supported corner cube for power distro opening mask
+module pd_corner(cutout, corner, board_thickness, xsign, ysign)
+{
+    translate([
+        xsign * (cutout - corner) / 2, 
+        ysign * (cutout - corner) / 2,
+        body_platform_thickness/2 + board_thickness
+    ])
+        cube([corner,corner,body_platform_thickness], center=true);
+    // Support for overhang. These will require "support thin features" in Cura.
+    for (xoff = [corner, corner*2/3, corner/3])
+        for (yoff = [corner, corner*2/3, corner/3])
+            translate([
+        xsign * (cutout/2 - xoff), 
+        ysign * (cutout/2 - yoff),
+        0
+    ])
+       cylinder(r1=1.1, r2=0.2, h=board_thickness);
+}
+
+// Screw hole for power distribution board mounting
+module pd_corner_hole(holes, hole_r, xsign, ysign)
+{
+    translate([xsign * holes/2,ysign * holes/2, -1])
+        cylinder(r=hole_r, h=12, $fn=50);
+    // Nut trap depth should be deep enough
+    // for entire nut. M3 nylon insert nuts
+    // are around 4.3mm in thickness (thicker
+    // than regular ones)
+    translate([xsign * holes/2, ysign * holes/2, body_platform_thickness - 4.3])
+        cylinder(r=3.2, h=5, $fn=6);
+}
+
+// Mask for power distro board opening
+module power_distro_mask(body_width)
+{
+    hw = body_width / 2;
+        // Add power distro board 50.5
+        // with 8x8 corner insets
+    cutout = 50.5;
+    board = 50;
+    holes = 46;
+    corner = 8;
+    hole_r = 1.8;
+    board_thickness = 2;
+        difference()
+        {
+            translate([0,0,-0.1])
+                cube([cutout, cutout, 20], center=true);
+            pd_corner(cutout, corner, board_thickness, -1, 1);
+            pd_corner(cutout, corner, board_thickness, 1, 1);
+            pd_corner(cutout, corner, board_thickness, 1, -1);
+            pd_corner(cutout, corner, board_thickness, -1, -1);
+        }
+        // Add screw holes for PD board
+        pd_corner_hole(holes, hole_r, -1, 1);
+        pd_corner_hole(holes, hole_r, 1, 1);
+        pd_corner_hole(holes, hole_r, 1, -1);
+        pd_corner_hole(holes, hole_r, -1, -1);
+}
+
 // Parametric body. This is an X drone (not +) which means
 // the front left and front right arms are at a 45 degree
-// angle to the direction of travel.
+// angle to the direction of travel. +Y is direction
+// of travel
 module new_body()
 {
     // Determine body width
-    body_width = airframe_span - 2 * (strut_length + 61);
+    body_width = airframe_body_width();
+    hw = body_width / 2;
     // Side of a regular octagon, derived from width
     g = body_width / (1 + sqrt(2));
     f = (body_width - g) / 2;
@@ -250,75 +327,60 @@ module new_body()
     echo("bw=", body_width, "g=", g, "f=", f);
     difference()
     {
-    linear_extrude(convexity=4, height=8)
-        // Points run clockwise
+    linear_extrude(convexity=4, height=body_platform_thickness)
+        // Points run clockwise and centered around [0,0]
         polygon(points=[
-        [g/2,0],
-        [g/2+f,-f],
-        [g/2+f,-f-g],
-        [g/2,-2*f-g],
-        [-g/2,-2*f-g],
-        [-g/2-f,-f-g],
-        [-g/2-f,-f],
-        [-g/2,0]
+        [g/2,f+g/2],
+        [g/2+f,g/2],
+        [g/2+f,-g/2],
+        [g/2,-f-g/2],
+        [-g/2,-f-g/2],
+        [-g/2-f,-g/2],
+        [-g/2-f,g/2],
+        [-g/2,f+g/2]
         ]);
-        // Map of hexagonal cells
+        // Map of hexagonal cells. First column
+        // is first row in direction of travel
         hm = [
-        [0,0,0,1,1,0,1,1,0,0,0],
-        [0,0,1,1,0,0,1,1,0,0,0],
-        [0,0,1,1,1,1,1,1,1,0,0],
-        [1,1,1,0,0,0,0,1,1,1,0],
-        [0,0,1,0,0,0,0,0,1,0,0],
-        [0,0,1,0,0,0,0,1,0,0,0],
-        [0,0,1,0,0,0,0,0,1,0,0],
-        [1,1,1,0,0,0,0,1,1,1,0],
-        [0,0,1,1,1,0,1,1,1,0,0],
-        [0,0,1,1,0,0,1,1,0,0,0],
-        [0,0,0,1,1,0,1,1,0,0,0]
+        [0,0,0,0,0,1,0,0,0,0,0],
+        [0,0,0,1,1,1,1,0,0,0,0],
+        [0,0,0,1,1,1,1,1,0,0,0],
+        [0,1,1,0,0,0,0,1,1,1,0],
+        [0,1,1,0,0,0,0,0,1,1,0],
+        [1,1,0,0,0,0,0,0,0,0,0],
+        [0,1,1,0,0,0,0,0,1,1,0],
+        [0,1,1,0,0,0,0,1,1,1,0],
+        [0,0,0,1,1,1,1,1,0,0,0],
+        [0,0,0,1,1,1,1,0,0,0,0],
+        [0,0,0,0,0,1,0,0,0,0,0]
         ];
         for (x=[0:10])
             for (y=[0:10])
             {
                 if (hm[x][y])
-                    translate([-body_width/2 + 15 + x *2 * hc,-14-y*2*hc - (x%2) * 7.5,-1])
-                    #cylinder(r=hc,h=10,$fn=6);
+                    translate([-hw + 15 + x *2 * hc,
+                        hw - 14 -y*2*hc - (x%2) * 7.5,-1])
+                    cylinder(r=hc,h=10,$fn=6);
             }
-        // Add power distro board 50.5
-        // with 8x8 corner insets
-        difference()
-        {
-            translate([0,-body_width/2,0])
-                cube([50.5, 50.5, 20], center=true);
-            translate([-50.5/2 + 8/2, -body_width/2 + 50.5/2 - 8/2, 2])
-                cube([8,8,8], center=true);
-            translate([-50.5/2 + 8/2, -body_width/2 - 50.5/2 + 8/2, 2])
-                cube([8,8,8], center=true);
-            translate([50.5/2 - 8/2, -body_width/2 + 50.5/2 - 8/2, 2])
-                cube([8,8,8], center=true);
-            translate([50.5/2 - 8/2, -body_width/2 - 50.5/2 + 8/2, 2])
-                cube([8,8,8], center=true);
-        }
-        // Add screw holes for PD board
-        translate([-50/2 + 2,-body_width/2 + 50/2 - 2, -1])
-            cylinder(r=1.8, h=12, $fn=50);
-        translate([50/2 - 2,-body_width/2 + 50/2 - 2, -1])
-            cylinder(r=1.8, h=12, $fn=50);
-        translate([-50/2 + 2,-body_width/2 - 50/2 + 2, -1])
-            cylinder(r=1.8, h=12, $fn=50);
-        translate([50/2 - 2,-body_width/2 - 50/2 + 2, -1])
-            cylinder(r=1.8, h=12, $fn=50);
+        power_distro_mask(body_width);
     }
     // Add mating sections
-    body_mating();
-    translate([body_width/2,-body_width/2,0])
-        rotate([0,0,-90])
-            body_mating();
-    translate([0,-body_width,0])
-        rotate([0,0,-180])
-            body_mating();
-    translate([-body_width/2,-body_width/2,0])
-        rotate([0,0,-270])
-            body_mating();
+    for (quadrant=[0:3])
+        body_mating(body_width, quadrant);
+    /*
+    Here's the list of items we need to attach:
+    [x] Power distro board
+    [ ] Battery 
+    [ ] 4 ESCs
+    [ ] Receiver + antenna
+    [ ] Flight controller (PixHawk)
+    [ ] Power converter
+    [ ] Flight converter adapter
+    [ ] Telemetry transceiver + antenna
+    [ ] FPV camera
+    [ ] FPV transceiver + antenna
+    [ ] Camera mount
+    */
 }
 
 // Mating section
@@ -361,13 +423,14 @@ if (render_end)
 
 if (render_body)
 {
+    body_width = airframe_body_width();
     //rotate([0,0,render_span_test==0 ? 45 : 0])
     new_body();
 }
 
 if (render_span_test)
 {
-    body_width = airframe_span - 2 * (strut_length + end_length);
+    body_width = airframe_body_width();
     #translate([0,-body_width,0]) rotate([-90,0,180])
       new_strut();
     #translate([0,-body_width,0])
