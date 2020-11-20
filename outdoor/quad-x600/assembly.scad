@@ -245,6 +245,7 @@ module new_body()
     // Side of a regular octagon, derived from width
     g = body_width / (1 + sqrt(2));
     f = (body_width - g) / 2;
+    // Honeycomb radius
     hc = 7.5;
     echo("bw=", body_width, "g=", g, "f=", f);
     difference()
@@ -266,11 +267,11 @@ module new_body()
         [0,0,0,1,1,0,1,1,0,0,0],
         [0,0,1,1,0,0,1,1,0,0,0],
         [0,0,1,1,1,1,1,1,1,0,0],
-        [1,1,1,1,1,1,1,1,1,1,0],
-        [0,0,1,1,1,1,1,1,1,0,0],
-        [0,0,1,1,1,1,1,1,0,0,0],
-        [0,0,1,1,1,1,1,1,1,0,0],
-        [1,1,1,1,1,1,1,1,1,1,0],
+        [1,1,1,0,0,0,0,1,1,1,0],
+        [0,0,1,0,0,0,0,0,1,0,0],
+        [0,0,1,0,0,0,0,1,0,0,0],
+        [0,0,1,0,0,0,0,0,1,0,0],
+        [1,1,1,0,0,0,0,1,1,1,0],
         [0,0,1,1,1,0,1,1,1,0,0],
         [0,0,1,1,0,0,1,1,0,0,0],
         [0,0,0,1,1,0,1,1,0,0,0]
@@ -284,8 +285,28 @@ module new_body()
             }
         // Add power distro board 50.5
         // with 8x8 corner insets
-        translate([0,(-body_width-50.5)/2,0])
-        cube([50.5, 50.5, 20], center=true);
+        difference()
+        {
+            translate([0,-body_width/2,0])
+                cube([50.5, 50.5, 20], center=true);
+            translate([-50.5/2 + 8/2, -body_width/2 + 50.5/2 - 8/2, 2])
+                cube([8,8,8], center=true);
+            translate([-50.5/2 + 8/2, -body_width/2 - 50.5/2 + 8/2, 2])
+                cube([8,8,8], center=true);
+            translate([50.5/2 - 8/2, -body_width/2 + 50.5/2 - 8/2, 2])
+                cube([8,8,8], center=true);
+            translate([50.5/2 - 8/2, -body_width/2 - 50.5/2 + 8/2, 2])
+                cube([8,8,8], center=true);
+        }
+        // Add screw holes for PD board
+        translate([-50/2 + 2,-body_width/2 + 50/2 - 2, -1])
+            cylinder(r=1.8, h=12, $fn=50);
+        translate([50/2 - 2,-body_width/2 + 50/2 - 2, -1])
+            cylinder(r=1.8, h=12, $fn=50);
+        translate([-50/2 + 2,-body_width/2 - 50/2 + 2, -1])
+            cylinder(r=1.8, h=12, $fn=50);
+        translate([50/2 - 2,-body_width/2 - 50/2 + 2, -1])
+            cylinder(r=1.8, h=12, $fn=50);
     }
     // Add mating sections
     body_mating();
