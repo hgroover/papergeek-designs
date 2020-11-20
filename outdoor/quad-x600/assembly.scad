@@ -5,6 +5,10 @@ render_body = 1;
 render_arch_test = 0;
 render_span_test = 0;
 
+/* [Battery] */
+
+battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery, none:no holder]
+
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole. Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
 screw_radius = 1.8;
@@ -310,6 +314,46 @@ module power_distro_mask(body_width)
         pd_corner_hole(holes, hole_r, -1, -1);
 }
 
+// Battery holder from width, height, length parameters
+module battery_holder_parms(width, height, length)
+{
+    outside_width = width + 5;
+    outside_height = height + 2.5;
+    outside_length = length + 2.5; // Only one endwall
+    side_cutout_width = (outside_length - 12) / 2;
+    // Construct base
+    for (y = [-length/2 + 1, 0, length/2 - 1])
+        translate([0,y,8/2 + body_platform_thickness])
+        cube([outside_width + 8, 4, 8], center=true);
+    difference()
+    {
+        translate([0,0,body_platform_thickness + outside_height/2 + 8])
+            cube([outside_width, outside_length, outside_height], center=true);
+        #translate([0,-2.51,body_platform_thickness + height/2 + 8 - 2.5])
+            cube([width-5, length-2.5, height-2.5], center=true);
+        // Cut out sides
+        #translate([0,side_cutout_width/2 + 2, body_platform_thickness + height/2])
+            cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
+        #translate([0,-side_cutout_width/2 - 2, body_platform_thickness + height/2])
+            cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
+        // Cut out bottom
+        #translate([0,side_cutout_width/2 + 2,
+        body_platform_thickness + height])
+            cube([width, side_cutout_width * 0.8, 8 + height], center=true);
+        #translate([0,-side_cutout_width/2 - 2,
+        body_platform_thickness + height])
+            cube([width, side_cutout_width * 0.8, 8 + height], center=true);
+    }
+    // Add supports for unsupported spans
+}
+
+// Battery holder
+module battery_holder(body_width)
+{
+    if (battery_holder_type == "45x30x140")
+       battery_holder_parms(45,30,140);
+}
+
 // Parametric body. This is an X drone (not +) which means
 // the front left and front right arms are at a 45 degree
 // angle to the direction of travel. +Y is direction
@@ -367,10 +411,12 @@ module new_body()
     // Add mating sections
     for (quadrant=[0:3])
         body_mating(body_width, quadrant);
+    // Battery holder
+    battery_holder(body_width);
     /*
     Here's the list of items we need to attach:
     [x] Power distro board
-    [ ] Battery 
+    [x] Battery 
     [ ] 4 ESCs
     [ ] Receiver + antenna
     [ ] Flight controller (PixHawk)
