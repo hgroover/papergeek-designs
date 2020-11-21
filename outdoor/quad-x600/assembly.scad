@@ -218,8 +218,8 @@ module new_strut()
     }
 }
 
-// Add a single body mating section
-module body_mating(body_width, quadrant)
+// Add a single body mating section with space for ESC
+module body_mating(body_width, quadrant, is_mask)
 {
     hw = body_width / 2;
     xd = (quadrant % 2 == 0) ? 0 : ((quadrant == 3) ? -hw : hw);
@@ -228,8 +228,10 @@ module body_mating(body_width, quadrant)
     rotate([0,0,-45])
     translate([xd,yd])
         rotate([0,0,zr])
-    difference()
+    union()
     {
+      if (!is_mask) difference()
+      {
         union()
         {
             translate([0,-section_mating_overlap,0])
@@ -246,6 +248,47 @@ module body_mating(body_width, quadrant)
         }
         translate([0,19,0])
             new_screw_mount(true, 9);
+        // Remove inner part
+        translate([0,-section_mating_overlap,0])
+          rotate([-90,0,0])
+            arch_section(0, section_mating_overlap, 0);
+      }
+      if (!is_mask) difference()
+      {
+          union()
+          {
+              // Add back in larger adapter for ESC
+              /***
+              translate([0,-4,0])
+                rotate([-90,0,0])
+                    arch_section(1, 4, 0);
+              translate([0,-8,0])
+                rotate([-90,0,0])
+                    arch_section(0, 4, 0);
+              ***/
+              translate([0,-section_mating_overlap, 0])
+                rotate([-90,0,0])
+                    arch_section(-1,section_mating_overlap,0);
+          }
+          // Cut out inside
+          translate([0,-section_mating_overlap-1,0])
+            rotate([-90,0,0])
+                arch_section(2,section_mating_overlap+2,0);
+          translate([0,-section_mating_overlap-1,0])
+            rotate([-90,0,0])
+                arch_section(0,section_mating_overlap-1,0);
+          // Remove the bottom of the -1 arch sticking out of the bottom
+          translate([0,0,-8])
+            cube([100,100,16], center=true);
+      }
+      if (is_mask)
+          difference()
+          {
+            translate([0,-section_mating_overlap-15,0])
+                rotate([-90,0,0])
+                    arch_section(0,section_mating_overlap+15-1,0);
+            cube([100,100,4], center=true);
+          }
     }
 }
 
@@ -371,9 +414,11 @@ module new_body()
     echo("bw=", body_width, "g=", g, "f=", f);
     difference()
     {
-    linear_extrude(convexity=4, height=body_platform_thickness)
+        union()
+        {
+            linear_extrude(convexity=4, height=body_platform_thickness)
         // Points run clockwise and centered around [0,0]
-        polygon(points=[
+                polygon(points=[
         [g/2,f+g/2],
         [g/2+f,g/2],
         [g/2+f,-g/2],
@@ -382,19 +427,23 @@ module new_body()
         [-g/2-f,-g/2],
         [-g/2-f,g/2],
         [-g/2,f+g/2]
-        ]);
+                ]);
+            // Add mating sections
+            for (quadrant=[0:3])
+                body_mating(body_width, quadrant, false);
+        }
         // Map of hexagonal cells. First column
         // is first row in direction of travel
         hm = [
         [0,0,0,0,0,1,0,0,0,0,0],
         [0,0,0,1,1,1,1,0,0,0,0],
-        [0,0,0,1,1,1,1,1,0,0,0],
-        [0,1,1,0,0,0,0,1,1,1,0],
+        [0,0,0,0,1,1,1,0,0,0,0],
+        [0,0,1,0,0,0,0,1,0,0,0],
         [0,1,1,0,0,0,0,0,1,1,0],
-        [1,1,0,0,0,0,0,0,0,0,0],
+        [1,1,0,0,0,0,0,0,1,1,0],
         [0,1,1,0,0,0,0,0,1,1,0],
-        [0,1,1,0,0,0,0,1,1,1,0],
-        [0,0,0,1,1,1,1,1,0,0,0],
+        [0,0,1,0,0,0,0,1,0,0,0],
+        [0,0,0,0,1,1,1,0,0,0,0],
         [0,0,0,1,1,1,1,0,0,0,0],
         [0,0,0,0,0,1,0,0,0,0,0]
         ];
@@ -407,17 +456,20 @@ module new_body()
                     cylinder(r=hc,h=10,$fn=6);
             }
         power_distro_mask(body_width);
+        // Subtract mating section masks
+        for (quadrant=[0:3])
+            body_mating(body_width, quadrant, true);
     }
-    // Add mating sections
-    for (quadrant=[0:3])
-        body_mating(body_width, quadrant);
     // Battery holder
     battery_holder(body_width);
     /*
     Here's the list of items we need to attach:
+    Bottom (here in new_body):
     [x] Power distro board
     [x] Battery 
-    [ ] 4 ESCs
+    [ ] Battery span supports
+    [x] 4 ESCs
+    Top:
     [ ] Receiver + antenna
     [ ] Flight controller (PixHawk)
     [ ] Power converter
@@ -426,6 +478,8 @@ module new_body()
     [ ] FPV camera
     [ ] FPV transceiver + antenna
     [ ] Camera mount
+    Shell:
+    [ ] GPS receiver / compass
     */
 }
 
@@ -470,8 +524,9 @@ if (render_end)
 if (render_body)
 {
     body_width = airframe_body_width();
-    //rotate([0,0,render_span_test==0 ? 45 : 0])
-    new_body();
+    translate([0,render_span_test==0 ? 0 : -body_width/2,0])
+    rotate([0,0,render_span_test==0 ? 0 : 45])
+        new_body();
 }
 
 if (render_span_test)
