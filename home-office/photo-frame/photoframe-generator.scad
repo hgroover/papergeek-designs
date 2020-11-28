@@ -2,8 +2,8 @@
 
 /* [Size] */
 picture_size = "wallet"; // [wallet:Wallet size 2.5x3.5 inches, wallet_windows:Windows wallet size 2.5x3.25 inches, contact:Contact sheet 1x1.5 inches, 4x6:4x6 inches]
-margin = 12; // Total frame margin in mm
-picture_overlap = 3; // How much of the picture's nominal dimensions are overlapped (obscured) by the frame, in mm?
+margin = 14; // Total frame margin in mm
+picture_overlap = 0; // How much of the picture's nominal dimensions are overlapped (obscured) by the frame, in mm?
 tab_thickness = 1.5; // Thickness of tabs in mm
 back_thickness = 1.0; // Thickness of back in mm
 top_thickness = 1.5; // Thickness of top in mm
@@ -64,6 +64,7 @@ module frame_top(width,height)
 {
     top_width = width + 2 * margin;
     top_height = height + 2 * margin;
+    echo("Top w=", top_width, width, "h=", top_height, height);
     difference()
     {
         cube([top_width, top_height, top_thickness]);
@@ -76,13 +77,13 @@ module frame_top(width,height)
             cylinder(r=1.5, h=10, $fn=50);
     }
     // Conch is 108x45 but scale it down a bit more
-    vscale = margin / 60;
-    translate([-1,6,top_thickness])
+    vscale = (margin + picture_overlap) / 64;
+    translate([-2,8,top_thickness])
     scale([vscale, vscale, 1])
     rotate([0,0,-30])
     linear_extrude(height=1, convexity=6)
         import( file = "conch.dxf", layer = "conch2" );
-    vscale_om = margin / 25;
+    vscale_om = (margin + picture_overlap) / 30;
     translate([0,(height + margin)/2 + 11,top_thickness])
         scale([vscale_om, vscale_om, 0.5])
             rotate([0,0,-90])
@@ -91,13 +92,13 @@ module frame_top(width,height)
         scale([vscale_om, vscale_om, 0.5])
             rotate([0,0,0])
                 import( file = "om.stl" );
-    vscale_lotus = margin / 20;
-    translate([1,height + margin,top_thickness])
+    vscale_lotus = (margin + picture_overlap) / 16;
+    translate([0,height + margin,top_thickness])
         scale([vscale_lotus, vscale_lotus, 1])
             rotate([0,0,0])
                 import( file = "lotus.stl" );
-    vscale_disc = margin / 60;
-    translate([width + margin + 2, height + margin + 2, top_thickness])
+    vscale_disc = (margin + picture_overlap) / 72;
+    translate([width + margin + 5, height + margin + 5, top_thickness])
         scale([vscale_disc, vscale_disc, 1])
             rotate([0,0,0])
                  import( file = "disc.stl" );
@@ -119,10 +120,10 @@ module frame_top(width,height)
                 linear_extrude(height=1, convexity=16)
                     import( file="disc.dxf", layer="disc1" );
     */
-    vscale4 = margin / 60;
-    translate([44,12,top_thickness])
+    vscale4 = (margin + picture_overlap) / 56;
+    translate([width + margin + 15, 13 - margin,top_thickness])
         scale([vscale4, vscale4, 1])
-            rotate([0,0,180])
+            rotate([0,0,90])
                 linear_extrude(height=1, convexity=6)
                     import( file="club.dxf", layer="club1" );
     /*
