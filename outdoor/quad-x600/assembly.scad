@@ -7,25 +7,36 @@ render_span_test = 0;
 
 /* [Battery] */
 
+// Size of battery holder
 battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery, none:no holder]
 
 /* [Advanced] */
-// M3x30mm screws hold struts together. Radius is for a slide-through hole. Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
-screw_radius = 1.8;
+// M3x30mm screws hold struts together. Radius is for a slide-through hole.
+screw_radius = 1.8; 
 // Screw block crosses the inside mating piece and also extends outside the outer piece. It lends strength to sidewalls which may otherwise suffer layer separation under stress
-screw_block_radius = 6;
-screw_length = 21;
+screw_block_radius = 6; 
+// Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
+screw_length = 21; 
 screw_mask_length = screw_length + 0.2;
-// Z offset for screw holes. Should merge screw block with structure without cutting into structure with screw shaft hole. Most be at least 2 * screw_radius above arch_wall
+
+// Z offset from flat top of strut for screw holes. Should merge screw block with structure without cutting into structure with screw shaft hole. Most be at least 2 * screw_radius above arch_wall
 screw_z = 9; 
 
-// Leg height is measured from top of motor mount
+// Radius of nut trap, measured at largest (point-to-point) diameter of nut. Default is M3 nut with nylon insert
+nut_trap_radius = 3.65;
+// Depth of nut trap. Generally 2.5mm is enough but nylon insert nuts are deeper. More depth may be needed to keep the nut completely flush.
+nut_trap_depth = 3.6; 
+
+// Strut leg height is measured from top of motor mount
 leg_height = 90;
+// Strut leg radius
 leg_radius = 10;
+// Strut leg wall thickness
 leg_wall = 2;
 
-// Outermost arch base and height values
+// Outermost arch base
 arch_base = 20;
+// Outermost arch height
 arch_height = 30;
 
 // Thickness of arch wall
@@ -38,8 +49,10 @@ body_platform_thickness = 8;
 arch_mating_coefficient = 1.0;
 
 // Strut parameters
-strut_length = 150;
-strut_leg_end_distance = 40;
+// Length added to structure by strut (does not include mating insertion)
+strut_length = 150; 
+// Distance of leg from outside end of strut
+strut_leg_end_distance = 40; 
 
 // Span from one prop shaft to the opposite determines body width (the central body is a regular octagon)
 airframe_span = 600;
@@ -47,19 +60,28 @@ airframe_span = 600;
 // Length of end from joining strut to center of prop shaft. Should be close to 60 but may be adjusted to keep body width to a multiple of 10 or some other neat value.
 end_length = 60;
 
-// Length of mating section protrusion and overlap, and tolerance
-section_mating = 30;
-section_mating_overlap = 30;
-// This should fit but may require sanding to make smooth
-section_mating_tolerance = 0.28;
-// Generate supports for mating sections
-section_mating_supports = 1;
+// Length of mating section protrusion
+section_mating = 30; 
+// Length of mating section overlap
+section_mating_overlap = 30; 
+// Mating section tolerance. Should fit but may require sanding to make smooth.
+section_mating_tolerance = 0.28; 
 
-// Steps determine resolution and must be an 
-// even integer
+// Generate supports for mating sections
+section_mating_supports = 1; 
+
+// Steps determine resolution and must be an even integer
 arch_steps = 32;
 
 /* [Hidden] */
+
+/* 
+********** Slicing notes: *******
+No supports - uses intrinsic supports
+Infill 25%, PLA, brim needed on glass.
+Print thin walls needed for Cura!
+******* end slicing notes *******
+*/
 
 // Parametric arch uses the basic formula of y=Ax^2
 // but A is derived from Vy (vertex y) and Zx (base crossing x)
@@ -372,22 +394,34 @@ module battery_holder_parms(width, height, length)
     {
         translate([0,0,body_platform_thickness + outside_height/2 + 8])
             cube([outside_width, outside_length, outside_height], center=true);
-        #translate([0,-2.51,body_platform_thickness + height/2 + 8 - 2.5])
+        translate([0,-2.51,body_platform_thickness + height/2 + 8 - 2.5])
             cube([width-5, length-2.5, height-2.5], center=true);
         // Cut out sides
-        #translate([0,side_cutout_width/2 + 2, body_platform_thickness + height/2])
+        translate([0,side_cutout_width/2 + 2, body_platform_thickness + height/2])
             cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
-        #translate([0,-side_cutout_width/2 - 2, body_platform_thickness + height/2])
+        translate([0,-side_cutout_width/2 - 2, body_platform_thickness + height/2])
             cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
         // Cut out bottom
-        #translate([0,side_cutout_width/2 + 2,
+        translate([0,side_cutout_width/2 + 2,
         body_platform_thickness + height])
             cube([width, side_cutout_width * 0.8, 8 + height], center=true);
-        #translate([0,-side_cutout_width/2 - 2,
+        translate([0,-side_cutout_width/2 - 2,
         body_platform_thickness + height])
             cube([width, side_cutout_width * 0.8, 8 + height], center=true);
     }
     // Add supports for unsupported spans
+    #translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
+        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+    #translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
+        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+    #translate([width/2 + 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+    #translate([-width/2 - 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+    #translate([0,0, (height +12) / 2])
+        cube([width - 5 - 0.4, 0.2, body_platform_thickness + height + 3.8], center=true);
+    #translate([0,-side_cutout_width - 4, (height +12) / 2])
+        cube([width - 5 - 0.4, 0.2, body_platform_thickness + height + 3.8], center=true);
 }
 
 // Battery holder
@@ -467,7 +501,7 @@ module new_body()
     Bottom (here in new_body):
     [x] Power distro board
     [x] Battery 
-    [ ] Battery span supports
+    [x] Battery span supports
     [x] 4 ESCs
     Top:
     [ ] Receiver + antenna
