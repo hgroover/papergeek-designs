@@ -305,7 +305,7 @@ module body_mating(body_width, quadrant, is_mask)
               ***/
               translate([0,-section_mating_overlap, 0])
                 rotate([-90,0,0])
-                    arch_section(-1,section_mating_overlap,0);
+                    arch_section(-2,section_mating_overlap,0);
           }
           // Cut out inside
           translate([0,-section_mating_overlap-1,0])
@@ -313,10 +313,14 @@ module body_mating(body_width, quadrant, is_mask)
                 arch_section(2,section_mating_overlap+2,0);
           translate([0,-section_mating_overlap-1,0])
             rotate([-90,0,0])
-                arch_section(0,section_mating_overlap-1,0);
-          // Remove the bottom of the -1 arch sticking out of the bottom
+                arch_section(-1.33,section_mating_overlap-1,0);
+          // Remove the bottom of the -2 arch sticking out of the bottom
           translate([0,0,-8])
             cube([100,100,16], center=true);
+          // Drill transverse hole for zipties to keep ESC in place
+          translate([-20,-20,20])
+            rotate([0,90,0])
+              cylinder(r=4, h=40, $fn=50);
       }
       if (is_mask)
           difference()
@@ -575,6 +579,7 @@ module new_body()
     [x] PD board opening about 0.5mm too small
     [x] PD board holes too close
     [x] Wire clearances in inserts are too tight (need to fit 3x18ga plus LEDs, and wires need to have bullet plugs)
+    [x] ESC arches are not tall enough to manage insertion angle
     */
 }
 
