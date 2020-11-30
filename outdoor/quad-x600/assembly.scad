@@ -13,7 +13,7 @@ battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery, none:no holder
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole.
 screw_radius = 1.8; 
-// Screw block crosses the inside mating piece and also extends outside the outer piece. It lends strength to sidewalls which may otherwise suffer layer separation under stress
+// Screw block crosses the inside mating piece and also extends outside the outer piece. It lends strength to sidewalls which may otherwise suffer layer separation under stress. The lower end of the screw block gets flattened to make room for wires
 screw_block_radius = 6; 
 // Length is the actual length of enclosed shaft, which must be at least 5mm less than the actual screw (so there is room for the nut)
 screw_length = 21; 
@@ -74,11 +74,19 @@ section_mating_supports = 1;
 arch_steps = 32;
 
 /* [Hidden] */
+model_ver = 2;
 
+/*
+********** Version history **********
+Version  Changes
+1        First print
+2        Fixed dimensional problems in first body print
+*************************************
+*/
 /* 
 ********** Slicing notes: *******
 No supports - uses intrinsic supports
-Infill 25%, PLA, brim needed on glass.
+Infill 50%, PLA, brim needed on glass.
 Print thin walls needed for Cura!
 ******* end slicing notes *******
 */
@@ -116,11 +124,18 @@ module new_screw_mount(is_mask, y_offset)
 {
     L = (is_mask ? screw_mask_length : screw_length);
     R = (is_mask ? screw_radius : screw_block_radius);
+    // Flatten part of screw block to make room for wires
+    difference()
+    {
     //rotate([0,0,-45]) 
         //rotate([-180,0,0]) 
             translate([-L/2,-screw_z, y_offset])
                         rotate([0,90,0])
                             cylinder(r=R, h=L, $fn=50);
+        if (!is_mask)
+            translate([0, -screw_z, y_offset + screw_block_radius + screw_radius])
+                cube([L*1.5, R*4, screw_block_radius*2], center=true);
+    }
 }
 
 // New strut leg without 45 degree rotation
@@ -357,9 +372,9 @@ module power_distro_mask(body_width)
     hw = body_width / 2;
         // Add power distro board 50.5
         // with 8x8 corner insets
-    cutout = 50.5;
+    cutout = 50.5 + 0.5;
     board = 50;
-    holes = 46;
+    holes = 45;
     corner = 8;
     hole_r = 1.8;
     board_thickness = 2;
@@ -372,14 +387,14 @@ module power_distro_mask(body_width)
             pd_corner(cutout, corner, board_thickness, 1, -1);
             pd_corner(cutout, corner, board_thickness, -1, -1);
         }
-        // Add screw holes for PD board
+        // Add screw holes for PD board. With board_thickness == 8, M3x8 screws work once nuts are all in
         pd_corner_hole(holes, hole_r, -1, 1);
         pd_corner_hole(holes, hole_r, 1, 1);
         pd_corner_hole(holes, hole_r, 1, -1);
         pd_corner_hole(holes, hole_r, -1, -1);
 }
 
-// Battery holder from width, height, length parameters
+// Battery holder from width, height, length parameters (size of battery to be accommodated)
 module battery_holder_parms(width, height, length)
 {
     outside_width = width + 5;
@@ -392,10 +407,11 @@ module battery_holder_parms(width, height, length)
         cube([outside_width + 8, 4, 8], center=true);
     difference()
     {
+        // Source material for holder needs to be suspended below platform with room for wires to come out (10-12 AWG main battery wires)
         translate([0,0,body_platform_thickness + outside_height/2 + 8])
             cube([outside_width, outside_length, outside_height], center=true);
-        translate([0,-2.51,body_platform_thickness + height/2 + 8 - 2.5])
-            cube([width-5, length-2.5, height-2.5], center=true);
+        translate([0,-2.51,body_platform_thickness + height/2 + 8])
+            cube([width, length, height], center=true);
         // Cut out sides
         translate([0,side_cutout_width/2 + 2, body_platform_thickness + height/2])
             cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
@@ -410,18 +426,18 @@ module battery_holder_parms(width, height, length)
             cube([width, side_cutout_width * 0.8, 8 + height], center=true);
     }
     // Add supports for unsupported spans
-    #translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
+    translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
         cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    #translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
+    translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
         cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    #translate([width/2 + 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+    translate([width/2 + 1, -side_cutout_width/2 - 2, (height + 12) / 2])
         cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    #translate([-width/2 - 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+    translate([-width/2 - 1, -side_cutout_width/2 - 2, (height + 12) / 2])
         cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    #translate([0,0, (height +12) / 2])
-        cube([width - 5 - 0.4, 0.2, body_platform_thickness + height + 3.8], center=true);
-    #translate([0,-side_cutout_width - 4, (height +12) / 2])
-        cube([width - 5 - 0.4, 0.2, body_platform_thickness + height + 3.8], center=true);
+    #translate([0,0, (height + 10.4 - 2.5 + body_platform_thickness) / 2])
+        cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
+    #translate([0,-side_cutout_width - 4, (height +10.4 - 2.5 + body_platform_thickness) / 2])
+        cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
 }
 
 // Battery holder
@@ -429,6 +445,18 @@ module battery_holder(body_width)
 {
     if (battery_holder_type == "45x30x140")
        battery_holder_parms(45,30,140);
+}
+
+// Nut trap mask. Normal orientation is nut on "top" (printed bottom) and screw on bottom
+module nut_trap(xoff, yoff, flipped)
+{
+    translate([xoff, yoff, -0.1])
+        #union()
+        {
+            cylinder(r=nut_trap_radius, h=nut_trap_depth, $fn=6);
+            translate([0,0,nut_trap_depth-0.1])
+                cylinder(r=screw_radius, h=body_platform_thickness * 1.2, $fn=50);
+        }
 }
 
 // Parametric body. This is an X drone (not +) which means
@@ -493,9 +521,35 @@ module new_body()
         // Subtract mating section masks
         for (quadrant=[0:3])
             body_mating(body_width, quadrant, true);
+        // Subtract mounting holes with nut traps
+        noff = 2 * nut_trap_radius;
+        noff2 = 1.2 * nut_trap_radius;
+        nut_trap(-hw + noff, -g/2 + noff2, false);
+        nut_trap(-hw + noff, g/2 - noff2, false);
+        nut_trap(hw - noff, -g/2 + noff2, false);
+        nut_trap(hw - noff, g/2 - noff2, false);
+        // Add a few mount holes in the back
+        nut_trap(g/2 - noff2, -hw + noff, false);
+        nut_trap(-g/2 + noff2, -hw + noff, false);
+        nut_trap(25, -hw + 2 * noff, false);
+        nut_trap(-25, -hw + 2 * noff, false);
+        nut_trap(40, -hw + 2.5 * noff, false);
+        nut_trap(-40, -hw + 2.5 * noff, false);
+        // Front has usual mount holes with some extras
+        nut_trap(g/2 - noff2, hw - noff, false);
+        nut_trap(-g/2 + noff2, hw - noff, false);
+        nut_trap(15, hw - noff, false);
+        nut_trap(-15, hw - noff, false);
+        nut_trap(25, hw - 2 * noff, false);
+        nut_trap(-25, hw - 2 * noff, false);
+        nut_trap(40, hw - 2.5 * noff, false);
+        nut_trap(-40, hw - 2.5 * noff, false);
     }
     // Battery holder
     battery_holder(body_width);
+    // Version stamp
+    translate([0,hw-6,body_platform_thickness])
+        text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
     /*
     Here's the list of items we need to attach:
     Bottom (here in new_body):
@@ -514,6 +568,13 @@ module new_body()
     [ ] Camera mount
     Shell:
     [ ] GPS receiver / compass
+    
+    Defects found in first print:
+    [x] Battery holder opening did not come out
+        as specified: supposed to be 45x30, actual 39.75 x 26.something
+    [x] PD board opening about 0.5mm too small
+    [x] PD board holes too close
+    [x] Wire clearances in inserts are too tight (need to fit 3x18ga plus LEDs, and wires need to have bullet plugs)
     */
 }
 
