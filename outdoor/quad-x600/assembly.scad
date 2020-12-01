@@ -119,8 +119,19 @@ module arch_poly(base,height,A)
     ]);
 }
 
+// Flattening object - if 0 (default), none, 1=z offset (strut protrusion), 2=y offset (body), 3=none (end unit or strut receptacle)
+module screw_mount_flattener(flattener_type, y_offset, L, R)
+{
+    if (flattener_type == 2)
+            translate([0, -screw_z, y_offset + screw_block_radius + screw_radius])
+                cube([L*1.5, R*4, screw_block_radius*2], center=true);
+    if (flattener_type == 1)
+        translate([0, -screw_z - R, y_offset + screw_block_radius])
+            cube([L*1.5, screw_block_radius * 2, R*4], center=true);
+}
+
 // New screw_mount() without 45 degree rotation
-module new_screw_mount(is_mask, y_offset)
+module new_screw_mount(is_mask, y_offset, flatten)
 {
     L = (is_mask ? screw_mask_length : screw_length);
     R = (is_mask ? screw_radius : screw_block_radius);
@@ -133,8 +144,7 @@ module new_screw_mount(is_mask, y_offset)
                         rotate([0,90,0])
                             cylinder(r=R, h=L, $fn=50);
         if (!is_mask)
-            translate([0, -screw_z, y_offset + screw_block_radius + screw_radius])
-                cube([L*1.5, R*4, screw_block_radius*2], center=true);
+            screw_mount_flattener(flatten, y_offset, L, R);
     }
 }
 
@@ -175,10 +185,10 @@ module new_end_unit()
                     union()
                     {
                         arch_section(0,end_length-12,0);
-                        new_screw_mount(false,10);
+                        new_screw_mount(false,10,3);
                     }
                     translate([0,0,-1]) arch_section(1, end_length - 12 + 1 - arch_wall, 0);
-                    new_screw_mount(true, 10);
+                    new_screw_mount(true, 10, 3);
                 }
                 // Motor mount - center of motor (prop shaft)
                 // is at end_length from end of strut
@@ -232,26 +242,28 @@ module new_strut()
     {
         union()
         {
+            // Receptacle end of strut which joins body
             difference()
             {
                 union()
                 {
                     arch_section(0, strut_length, 0);
-                    new_screw_mount(false,10);
+                    new_screw_mount(false,10,3);
                     new_strut_leg(false,strut_length - 36);
                 }
                 translate([0,0,-1]) arch_section(1, strut_length + 2, 0);
-                new_screw_mount(true,10);
+                new_screw_mount(true,10,3);
                 new_strut_leg(true,strut_length - 36);
             }
+            // Protrusion end of strut
             translate([0,0,strut_length - section_mating_overlap]) mating(false);
             intersection()
             {
-                new_screw_mount(false,strut_length + 10);
+                new_screw_mount(false,strut_length + 10, 1);
                 translate([0,0,strut_length - section_mating_overlap]) mating(true);
             }
         }
-        new_screw_mount(true,strut_length + 10);
+        new_screw_mount(true,strut_length + 10, 1);
     }
 }
 
@@ -277,14 +289,14 @@ module body_mating(body_width, quadrant, is_mask)
             intersection()
             {
                 translate([0,19,0])
-                    new_screw_mount(false, 9);
+                    new_screw_mount(false, 9, 2);
                 translate([0,-section_mating_overlap,0])
                     rotate([-90,0,0])
                         mating(true);
             }
         }
         translate([0,19,0])
-            new_screw_mount(true, 9);
+            new_screw_mount(true, 9, 2);
         // Remove inner part
         translate([0,-section_mating_overlap,0])
           rotate([-90,0,0])
@@ -600,7 +612,7 @@ module mating(is_mask)
     {
         for (n=[-6,-4,-2,0,2,4,6])
         translate([n*1.08,0,section_mating+0.5])
-        linear_extrude(convexity=3, height=section_mating)
+        linear_extrude(convexity=3, height=section_mating-0.5)
             polygon(points=[
                     [-1,0],
                     [1,0],
