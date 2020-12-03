@@ -1,7 +1,18 @@
 /* [Parts] */
+// Render a single strut
 render_strut = 0;
+// Render end assembly which attaches to strut
 render_end = 0;
+// Render central body with selected battery holder type
 render_body = 1;
+// Render shell and attachment tower
+render_shell = 0;
+// Render attachment tower
+render_pixhawk = 0;
+// Render GPS traveller
+render_gps = 0;
+// Render spacers used with attachment tower
+render_spacers = 0;
 render_arch_test = 0;
 render_span_test = 0;
 
@@ -466,8 +477,8 @@ module battery_holder(body_width)
 // Nut trap mask. Normal orientation is nut on "top" (printed bottom) and screw on bottom
 module nut_trap(xoff, yoff, flipped)
 {
-    translate([xoff, yoff, -0.1])
-        #union()
+    translate([xoff, yoff, -0.1 + (flipped ? body_platform_thickness + 0.2 : 0)])
+        #rotate([flipped ? 180 : 0, 0, 0]) union()
         {
             cylinder(r=nut_trap_radius, h=nut_trap_depth, $fn=6);
             translate([0,0,nut_trap_depth-0.1])
@@ -560,12 +571,27 @@ module new_body()
         nut_trap(-25, hw - 2 * noff, false);
         nut_trap(40, hw - 2.5 * noff, false);
         nut_trap(-40, hw - 2.5 * noff, false);
+        // Add mounting holes for Pixhawk standoff pillars
+        nut_trap(-33, 22, true);
+        nut_trap(-33, -22, true);
+        nut_trap(33, 22, true);
+        nut_trap(33, -22, true);
+        // Add mounting holes for other components on sides
+        nut_trap(hw-15, -g/2 + 15, true);
+        nut_trap(hw-15, g/2 - 15, true);
+        nut_trap(hw-57, 0, true);
+        nut_trap(-hw+15, -g/2 + 15, true);
+        nut_trap(-hw+15, g/2 - 15, true);
+        nut_trap(-hw+57, 0, true);
+        // More mounting holes on trailing edge
+        nut_trap(-15, -hw+12, true);
+        nut_trap(15, -hw+12, true);
     }
     // Battery holder
     battery_holder(body_width);
     // Version stamp
     translate([0,hw-6,body_platform_thickness])
-        text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
+        linear_extrude(1) text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
     /*
     Here's the list of items we need to attach:
     Bottom (here in new_body):
@@ -621,6 +647,22 @@ module mating(is_mask)
     }
 }
 
+module top_shell(flipped)
+{
+    // flipped true iff we are also rendering body and want to show it relative to "bottom" (actually top) of the body platform
+}
+
+module tower_pixhawk(flipped)
+{
+}
+
+module tower_gps(flipped)
+{
+}
+
+// Main entry point
+// ================
+
 if (render_strut)
 {
   rotate([-90,0,0]) 
@@ -640,6 +682,26 @@ if (render_body)
     rotate([0,0,render_span_test==0 ? 0 : 45])
         new_body();
 }
+
+if (render_shell)
+{
+    top_shell(render_body);
+}
+
+if (render_pixhawk)
+{
+    tower_pixhawk(render_body);
+}
+
+if (render_gps)
+{
+    tower_gps(render_body);
+}
+
+// May not be needed
+//if (render_spacers)
+//{
+//}
 
 if (render_span_test)
 {
