@@ -85,13 +85,14 @@ section_mating_supports = 1;
 arch_steps = 32;
 
 /* [Hidden] */
-model_ver = 2;
+model_ver = 3;
 
 /*
 ********** Version history **********
 Version  Changes
 1        First print
 2        Fixed dimensional problems in first body print
+3        Addressing issues in second print
 *************************************
 */
 /* 
@@ -611,13 +612,17 @@ module new_body()
     Shell:
     [ ] GPS receiver / compass
     
-    Defects found in first print:
+    Defects found in first print (v1):
     [x] Battery holder opening did not come out
         as specified: supposed to be 45x30, actual 39.75 x 26.something
     [x] PD board opening about 0.5mm too small
     [x] PD board holes too close
     [x] Wire clearances in inserts are too tight (need to fit 3x18ga plus LEDs, and wires need to have bullet plugs)
     [x] ESC arches are not tall enough to manage insertion angle
+    
+    Defects in second print (v2):
+    [ ] ESC pocket creates weak spot where strut mount protrusions have no structural connection
+    
     */
 }
 
@@ -647,9 +652,47 @@ module mating(is_mask)
     }
 }
 
+module top_shell_pillar(z_trans, x_off, y_off, base_radius, y_scale, z_scale)
+{
+    ztrans2 = (z_trans < 0) ? z_trans : -z_trans;
+    echo("z_trans", z_trans, "ztrans2", ztrans2);
+    #translate([x_off, y_off, ztrans2])
+        cylinder(r=6, h=abs(z_trans), $fn=6);
+    intersection()
+    {
+        scale([1,y_scale,z_scale])
+            sphere(r=base_radius, $fn=50);
+        translate([x_off, y_off, 0])
+            cylinder(r=6, h=abs(z_trans), $fn=6);
+    }
+}
+
 module top_shell(flipped)
 {
     // flipped true iff we are also rendering body and want to show it relative to "bottom" (actually top) of the body platform
+    base_radius = 45;
+    y_scale = 1.8;
+    z_scale = 0.6;
+    y_rot = flipped ? 180 : 0;
+    z_trans = flipped ? -50 : 50;
+    translate([0,0,z_trans])
+    rotate([0,y_rot,0])
+    union()
+    {
+      difference()
+      {
+        scale([1,y_scale,z_scale])
+            sphere(r=base_radius, $fn=50);
+        scale([1,y_scale,z_scale])
+            sphere(r=base_radius - 1.8, $fn=50);
+        translate([0,0,-base_radius*0.6])
+            cube([4*base_radius, 4*base_radius, 2*base_radius*0.6], center=true);
+      }
+      top_shell_pillar(z_trans, -33, 22, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, -33, -22, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, 33, 22, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, 33, -22, base_radius, y_scale, z_scale);
+  }
 }
 
 module tower_pixhawk(flipped)
