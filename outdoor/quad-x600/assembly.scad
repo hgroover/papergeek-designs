@@ -5,6 +5,8 @@ render_strut = 0;
 render_end = 0;
 // Render central body with selected battery holder type
 render_body = 1;
+// Render battery holder
+render_battery_holder = 0;
 // Render shell and attachment tower
 render_shell = 0;
 // Render attachment tower
@@ -19,7 +21,7 @@ render_span_test = 0;
 /* [Battery] */
 
 // Size of battery holder
-battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery, none:no holder]
+battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery]
 
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole.
@@ -425,35 +427,75 @@ module power_distro_mask(body_width)
 // Battery holder from width, height, length parameters (size of battery to be accommodated)
 module battery_holder_parms(width, height, length)
 {
-    outside_width = width + 5;
+    // Mount holes are 120x60 OC (Y is the long axis)
+    mount_spacing_y = 120;
+    mount_spacing_x = 60;
+    // Offset above surface to allow PD board wires to exit
+    surface_offset = 12;
+    // Outside dimensions do not include base with surface
+    // offset - they only encapsulate the wall thicknesses.
+    outside_width = width + 8;
     outside_height = height + 2.5;
     outside_length = length + 2.5; // Only one endwall
-    side_cutout_width = (outside_length - 12) / 2;
-    // Construct base
-    for (y = [-length/2 + 1, 0, length/2 - 1])
-        translate([0,y,8/2 + body_platform_thickness])
-        cube([outside_width + 8, 4, 8], center=true);
+    side_cutout_width = (length - 4 * 6) / 4;
+    side_cutout_height = height - 6 - 6;
+    echo("bh(",width,height,length,") oh=", outside_height, "ow=", outside_width, "ol=", outside_length);
     difference()
     {
-        // Source material for holder needs to be suspended below platform with room for wires to come out (10-12 AWG main battery wires)
-        translate([0,0,body_platform_thickness + outside_height/2 + 8])
-            cube([outside_width, outside_length, outside_height], center=true);
-        translate([0,-2.51,body_platform_thickness + height/2 + 8])
-            cube([width, length, height], center=true);
+        union()
+        {
+        // Construct base
+        for (y = [-length/2 + 0.75, 0, length/2 - 0.75])
+            translate([0,y,surface_offset/2])
+            cube([outside_width + surface_offset, 4, surface_offset], center=true);
+            // Source material for holder needs to be suspended below platform with room for wires to come out (10-12 AWG main battery wires)
+            translate([0,0,outside_height/2 + surface_offset])
+                cube([outside_width, outside_length, outside_height], center=true);
+            // Sidebars connecting supports are formed by reducing side cutouts
+            // Add screw bulkheads for attachment
+            translate([mount_spacing_x/2 - 1.5, mount_spacing_y/2, surface_offset/2])
+                cube([12,15,surface_offset], center=true);
+            translate([mount_spacing_x/2 - 1.5, -mount_spacing_y/2, surface_offset/2])
+                cube([12,15,surface_offset], center=true);
+            translate([-mount_spacing_x/2 + 1.5, mount_spacing_y/2, surface_offset/2])
+                cube([12,15,surface_offset], center=true);
+            translate([-mount_spacing_x/2 + 1.5, -mount_spacing_y/2, surface_offset/2])
+                cube([12,15,surface_offset], center=true);
+        }
+        // Cut out main space for battery
+        translate([0,-2.75,height/2 + surface_offset -0.01])
+            cube([width, length, height+0.02], center=true);
+        // Reduce screw bulkheads
+        translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+            cube([12,15,surface_offset], center=true);
+        translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+            cube([12,15,surface_offset], center=true);
+        translate([-mount_spacing_x/2 - 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+            cube([12,15,surface_offset], center=true);
+        translate([-mount_spacing_x/2 - 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+            cube([12,15,surface_offset], center=true);
         // Cut out sides
-        translate([0,side_cutout_width/2 + 2, body_platform_thickness + height/2])
-            cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
-        translate([0,-side_cutout_width/2 - 2, body_platform_thickness + height/2])
-            cube([outside_width + 5, side_cutout_width, 8 + height], center=true);
-        // Cut out bottom
-        translate([0,side_cutout_width/2 + 2,
-        body_platform_thickness + height])
-            cube([width, side_cutout_width * 0.8, 8 + height], center=true);
-        translate([0,-side_cutout_width/2 - 2,
-        body_platform_thickness + height])
-            cube([width, side_cutout_width * 0.8, 8 + height], center=true);
+        for (y=[0, 1, 2, 3])
+        {
+            translate([0,side_cutout_width/2 - length/2 + 4 + y * (side_cutout_width + 6), side_cutout_height/2 + surface_offset + 6])
+                cube([outside_width + 5, side_cutout_width, side_cutout_height], center=true);
+            // Cut out bottom
+            translate([0,side_cutout_width/2 - length/2 + 4 + y * (side_cutout_width + 6),
+        height])
+                cube([width, side_cutout_width, surface_offset + height], center=true);
+        }
+        // Drill holes for support attachment
+        #translate([mount_spacing_x/2, mount_spacing_y/2, -0.1])
+            cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
+        #translate([mount_spacing_x/2, -mount_spacing_y/2, -0.1])
+            cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
+        #translate([-mount_spacing_x/2, mount_spacing_y/2, -0.1])
+            cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
+        #translate([-mount_spacing_x/2, -mount_spacing_y/2, -0.1])
+            cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
     }
     // Add supports for unsupported spans
+    /**********
     translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
         cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
     translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
@@ -466,6 +508,7 @@ module battery_holder_parms(width, height, length)
         cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
     #translate([0,-side_cutout_width - 4, (height +10.4 - 2.5 + body_platform_thickness) / 2])
         cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
+    ********/
 }
 
 // Battery holder
@@ -577,6 +620,11 @@ module new_body()
         nut_trap(-33, -22, true);
         nut_trap(33, 22, true);
         nut_trap(33, -22, true);
+        // Add mounting holes for battery holder
+        nut_trap(30, 60, false);
+        nut_trap(30, -60, false);
+        nut_trap(-30, 60, false);
+        nut_trap(-30, -60, false);
         // Add mounting holes for other components on sides
         nut_trap(hw-15, -g/2 + 15, true);
         nut_trap(hw-15, g/2 - 15, true);
@@ -588,8 +636,8 @@ module new_body()
         nut_trap(-15, -hw+12, true);
         nut_trap(15, -hw+12, true);
     }
-    // Battery holder
-    battery_holder(body_width);
+    // Battery holder is now separate
+    //battery_holder(body_width);
     // Version stamp
     translate([0,hw-6,body_platform_thickness])
         linear_extrude(1) text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
@@ -622,6 +670,9 @@ module new_body()
     
     Defects in second print (v2):
     [ ] ESC pocket creates weak spot where strut mount protrusions have no structural connection
+    [ ] Corner pillars on battery holder are too thin. Print had layer separation but still too thin
+    [x] Battery holder wall supports are too thin (no longer exist - use support everywhere)
+    [x] Unbundle battery holder
     
     */
 }
@@ -724,6 +775,11 @@ if (render_body)
     translate([0,render_span_test==0 ? 0 : -body_width/2,0])
     rotate([0,0,render_span_test==0 ? 0 : 45])
         new_body();
+}
+
+if (render_battery_holder)
+{
+    battery_holder(airframe_body_width());
 }
 
 if (render_shell)
