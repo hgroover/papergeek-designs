@@ -439,6 +439,8 @@ module battery_holder_parms(width, height, length)
     outside_length = length + 2.5; // Only one endwall
     side_cutout_width = (length - 4 * 6) / 4;
     side_cutout_height = height - 6 - 6;
+    screw_bulkhead_x = 12;
+    screw_bulkhead_y = 15;
     echo("bh(",width,height,length,") oh=", outside_height, "ow=", outside_width, "ol=", outside_length);
     difference()
     {
@@ -454,26 +456,26 @@ module battery_holder_parms(width, height, length)
             // Sidebars connecting supports are formed by reducing side cutouts
             // Add screw bulkheads for attachment
             translate([mount_spacing_x/2 - 1.5, mount_spacing_y/2, surface_offset/2])
-                cube([12,15,surface_offset], center=true);
+                cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
             translate([mount_spacing_x/2 - 1.5, -mount_spacing_y/2, surface_offset/2])
-                cube([12,15,surface_offset], center=true);
+                cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
             translate([-mount_spacing_x/2 + 1.5, mount_spacing_y/2, surface_offset/2])
-                cube([12,15,surface_offset], center=true);
+                cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
             translate([-mount_spacing_x/2 + 1.5, -mount_spacing_y/2, surface_offset/2])
-                cube([12,15,surface_offset], center=true);
+                cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         }
         // Cut out main space for battery
         translate([0,-2.75,height/2 + surface_offset -0.01])
             cube([width, length, height+0.02], center=true);
         // Reduce screw bulkheads
         translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
-            cube([12,15,surface_offset], center=true);
+            cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
-            cube([12,15,surface_offset], center=true);
+            cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([-mount_spacing_x/2 - 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
-            cube([12,15,surface_offset], center=true);
+            cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([-mount_spacing_x/2 - 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
-            cube([12,15,surface_offset], center=true);
+            cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         // Cut out sides
         for (y=[0, 1, 2, 3])
         {
@@ -670,7 +672,7 @@ module new_body()
     
     Defects in second print (v2):
     [ ] ESC pocket creates weak spot where strut mount protrusions have no structural connection
-    [ ] Corner pillars on battery holder are too thin. Print had layer separation but still too thin
+    [x] Corner pillars on battery holder are too thin. Print had layer separation but still too thin
     [x] Battery holder wall supports are too thin (no longer exist - use support everywhere)
     [x] Unbundle battery holder
     
@@ -779,7 +781,8 @@ if (render_body)
 
 if (render_battery_holder)
 {
-    battery_holder(airframe_body_width());
+    translate([0,0,render_body ? 8 : 0])
+        battery_holder(airframe_body_width());
 }
 
 if (render_shell)
