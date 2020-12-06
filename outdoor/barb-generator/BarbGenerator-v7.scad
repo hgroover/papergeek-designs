@@ -28,7 +28,7 @@ outputs = 1;
 output_units = "US"; // [US,Metric]
 
 // Output tubing inside diameter, e.g. 0.17 for 1/4 inch OD (outside diameter) vinyl tubing (US); 0.25 for 1/4 inch ID (inside diameter) (US); 0.375 for 3/8 inch ID. For a PVC pipe connector going into a female fitting, pipe sizes are in inside diameter, so the outside of a 3/4" PVC pipe is actually 1.0 inches (used with output_barb_count=0 for a smooth output)
-output_size = 0.500;
+output_size = 0.7500;
 
 // Strength factor - use more than 1 for thicker walls to handle higher pressure and stronger clamping. Range: 0.9-1.5. Reduce only for I.D. greater than 0.5 inches
 output_strength = 1.2;
