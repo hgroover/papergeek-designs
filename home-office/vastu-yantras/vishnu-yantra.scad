@@ -1,12 +1,12 @@
 module s(unicode_s, textsize)
 {
-    linear_extrude(height=1)
+    linear_extrude(height=0.5)
     text(unicode_s, size=textsize, halign="center", valign="center", font="Sanskrit 2003:style=Regular");
 }
 
-module a_s(us, textsize, angle, flipped)
+module a_s(us, textsize, angle, flipped, radius_tweak=0)
 {
-    r = 30.5;
+    r = 30.5 + radius_tweak;
     m90 = abs(angle % 90);
     q = floor(abs(angle / 90));
     a = r * sin(m90);
@@ -28,10 +28,10 @@ module a_s(us, textsize, angle, flipped)
 
 om_size = 10;
 namo_size = 4.2;
-keshav_size = 3;
+keshav_size = 3.3;
 
 import("vishnu-yantra-base.stl");
-translate([0,0,6.4])
+translate([0,0,2.5])
 {
     translate([0,7,0])
         s("ॐ", om_size);
@@ -52,15 +52,15 @@ translate([0,0,6.4])
         s("", namo_size);
     translate([-0.5,-19,0])
         s("", namo_size);
-    a_s("केशव", keshav_size, 0, false);
+    a_s("केशव", keshav_size, 0, false, 0.1);
     a_s("नारायण", keshav_size, -30, false);
     a_s("माधव", keshav_size, -60, false);
     a_s("गोविन्द", keshav_size, -90, false);
-    a_s("विष्णु", keshav_size, -120, true);
+    a_s("विष्णु", keshav_size, -120, true, -0.4);
     a_s("मधुसूदन", keshav_size, -150, true);
-    a_s("त्रिविक्रम", keshav_size, -180, true);
+    a_s("त्रिविक्रम", keshav_size, -180, true, -0.7);
     a_s("वामन", keshav_size, -210, true);
-    a_s("श्रीधर", keshav_size, -240, true);
+    a_s("श्रीधर", keshav_size, -240, true, -0.5);
     a_s("हृषीकेश", keshav_size, -270, false);
     a_s("पद्मनाभ", keshav_size, -300, false);
     a_s("दामोदर", keshav_size, -330, false);
