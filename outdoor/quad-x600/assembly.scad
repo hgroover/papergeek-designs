@@ -1,4 +1,10 @@
 /* [Parts] */
+// Generate intrinsic supports. These will probably not serve as well as what a properly configured slicer can do, with supports only for parts overhanging the bed (specifically, this applies to the power distribution board mount points)
+generate_supports = 0;
+
+// Generate intrinsic supports for mating sections
+section_mating_supports = 0; 
+
 // Render a single strut
 render_strut = 0;
 // Render end assembly which attaches to strut
@@ -80,8 +86,6 @@ section_mating_overlap = 30;
 // Mating section tolerance. Should fit but may require sanding to make smooth.
 section_mating_tolerance = 0.28; 
 
-// Generate supports for mating sections
-section_mating_supports = 1; 
 
 // Steps determine resolution and must be an even integer
 arch_steps = 32;
@@ -95,11 +99,13 @@ Version  Changes
 1        First print
 2        Fixed dimensional problems in first body print
 3        Addressing issues in second print
+         Added option to control intrinsic supports,
+         which are now deprecated.
 *************************************
 */
 /* 
 ********** Slicing notes: *******
-No supports - uses intrinsic supports
+Supports touching bed only, unless using (deprecated) intrinsic supports
 Infill 50%, PLA, brim needed on glass.
 Print thin walls needed for Cura!
 ******* end slicing notes *******
@@ -348,13 +354,15 @@ module body_mating(body_width, quadrant, is_mask)
             rotate([0,90,0])
               cylinder(r=4, h=40, $fn=50);
       }
+      // Generate slight pocket for ESC holder.
+      // Too much weakens the junction
       if (is_mask)
-          difference()
+          #difference()
           {
             translate([0,-section_mating_overlap-15,0])
                 rotate([-90,0,0])
                     arch_section(0,section_mating_overlap+15-1,0);
-            cube([100,100,4], center=true);
+            cube([100,100,12], center=true);
           }
     }
 }
@@ -372,15 +380,18 @@ module pd_corner(cutout, corner, board_thickness, xsign, ysign)
         body_platform_thickness/2 + board_thickness
     ])
         cube([corner,corner,body_platform_thickness], center=true);
-    // Support for overhang. These will require "support thin features" in Cura.
-    for (xoff = [corner, corner*2/3, corner/3])
-        for (yoff = [corner, corner*2/3, corner/3])
-            translate([
-        xsign * (cutout/2 - xoff), 
-        ysign * (cutout/2 - yoff),
-        0
-    ])
-       cylinder(r1=1.1, r2=0.2, h=board_thickness);
+    if (generate_supports)
+    {
+        // Support for overhang. These will require "support thin features" in Cura.
+        for (xoff = [corner, corner*2/3, corner/3])
+            for (yoff = [corner, corner*2/3, corner/3])
+                translate([
+            xsign * (cutout/2 - xoff), 
+            ysign * (cutout/2 - yoff),
+            0
+        ])
+           cylinder(r1=1.1, r2=0.2, h=board_thickness);
+     }
 }
 
 // Screw hole for power distribution board mounting
@@ -468,9 +479,9 @@ module battery_holder_parms(width, height, length)
         translate([0,-2.75,height/2 + surface_offset -0.01])
             cube([width, length, height+0.02], center=true);
         // Reduce screw bulkheads
-        translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+        #translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
-        translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+       #translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([-mount_spacing_x/2 - 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
@@ -496,21 +507,24 @@ module battery_holder_parms(width, height, length)
         #translate([-mount_spacing_x/2, -mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
     }
-    // Add supports for unsupported spans
-    /**********
-    translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
-        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
-        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    translate([width/2 + 1, -side_cutout_width/2 - 2, (height + 12) / 2])
-        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    translate([-width/2 - 1, -side_cutout_width/2 - 2, (height + 12) / 2])
-        cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
-    #translate([0,0, (height + 10.4 - 2.5 + body_platform_thickness) / 2])
-        cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
-    #translate([0,-side_cutout_width - 4, (height +10.4 - 2.5 + body_platform_thickness) / 2])
-        cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
-    ********/
+    if (generate_supports)
+    {
+        // Add supports for unsupported spans
+        /**********
+        translate([width/2 + 1, side_cutout_width/2 + 2, (height + 12) / 2])
+            cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+        translate([-width/2 - 1, side_cutout_width/2 + 2, (height + 12) / 2])
+            cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+        translate([width/2 + 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+            cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+        translate([-width/2 - 1, -side_cutout_width/2 - 2, (height + 12) / 2])
+            cube([0.2, side_cutout_width - 0.4,  body_platform_thickness + height + 3.8], center=true);
+        #translate([0,0, (height + 10.4 - 2.5 + body_platform_thickness) / 2])
+            cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
+        #translate([0,-side_cutout_width - 4, (height +10.4 - 2.5 + body_platform_thickness) / 2])
+            cube([width - 0.4, 0.2, body_platform_thickness + height + 10.4 - 2.5], center=true);
+        ********/
+    }
 }
 
 // Battery holder
