@@ -9,7 +9,7 @@ section_mating_supports = 0;
 render_strut = 0;
 // Render end assembly which attaches to strut
 render_end = 0;
-// Render central body with selected battery holder type
+// Render central body
 render_body = 1;
 // Render battery holder
 render_battery_holder = 0;
@@ -54,9 +54,9 @@ leg_radius = 10;
 leg_wall = 2;
 
 // Outermost arch base
-arch_base = 20;
+arch_base = 22;
 // Outermost arch height
-arch_height = 30;
+arch_height = 36;
 
 // Thickness of arch wall
 arch_wall = 3.3;
@@ -101,6 +101,10 @@ Version  Changes
 3        Addressing issues in second print
          Added option to control intrinsic supports,
          which are now deprecated.
+         Increased arch width and height, 
+         which invalidates all previously printed
+         parts. Needed to accommodate 3.5mm female
+         connectors.
 *************************************
 */
 /* 
@@ -357,7 +361,7 @@ module body_mating(body_width, quadrant, is_mask)
       // Generate slight pocket for ESC holder.
       // Too much weakens the junction
       if (is_mask)
-          #difference()
+          difference()
           {
             translate([0,-section_mating_overlap-15,0])
                 rotate([-90,0,0])
