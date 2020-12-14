@@ -826,8 +826,11 @@ module top_shell(flipped)
 
 module tower_pixhawk(flipped, with_base, with_top)
 {
-    if (flight_controller_type == "pixhawk1")
-        tower_pixhawk1(flipped, with_base, with_top);
+    translate([0,0,17.5])
+    {
+        if (flight_controller_type == "pixhawk1")
+            tower_pixhawk1(flipped, with_base, with_top);
+    }
 }
 
 module tower_pixhawk1(flipped, with_base, with_top)
@@ -986,9 +989,9 @@ module tower_spacers(flipped, which_spacer)
 {
     // Align with one leg of tower
     if (which_spacer == 1) // lower
-        tower_spacer(pillar_x, pillar_y, -30, 17.5);
+        tower_spacer(pillar_x, pillar_y, 0, 17.5);
     if (which_spacer == 2) // upper
-        tower_spacer(pillar_x, pillar_y, 22.5, 23.5);
+        tower_spacer(pillar_x, pillar_y, 40, 10.0-4);
 }
 
 module tower_spacer(xoff, yoff, zoff, length)
