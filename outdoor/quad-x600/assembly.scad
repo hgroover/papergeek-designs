@@ -15,19 +15,35 @@ render_body = 1;
 render_battery_holder = 0;
 // Render shell and attachment tower
 render_shell = 0;
-// Render attachment tower
+// Render attachment for flight controller base
 render_pixhawk = 0;
+// Render attachment for flight controller top
+render_pixhawk_top = 0;
 // Render GPS traveller
 render_gps = 0;
 // Render spacers used with attachment tower
-render_spacers = 0;
+render_spacers = 0; // [0:none, 1:lower, 2:upper]
 render_arch_test = 0;
 render_span_test = 0;
+
+/* [Identifying info] */
+
+// If not blank, FAA certificate number will be on main body and shell
+faa_id = "";
+
+// If not blank, owner name will be on shell
+owner_name = "";
 
 /* [Battery] */
 
 // Size of battery holder
 battery_holder_type = "45x30x140"; // [45x30x140:5000mAh battery]
+
+/* [Flight controller] */
+flight_controller_type = "pixhawk1"; // [pixhawk1:Pixhawk 1]
+
+/* [GPS] */
+gps_type = "3dr/ublox"; // [3dr/ublox:3DR Ublox module, removed from dome]
 
 /* [Advanced] */
 // M3x30mm screws hold struts together. Radius is for a slide-through hole.
@@ -45,6 +61,8 @@ screw_z = 9;
 nut_trap_radius = 3.65;
 // Depth of nut trap. Generally 2.5mm is enough but nylon insert nuts are deeper. More depth may be needed to keep the nut completely flush.
 nut_trap_depth = 3.6; 
+// With of a slot-type nut trap, which is the flat-to-flat diameter of the nut. Default is for M3 nut
+nut_slot_width = 5.5;
 
 // Strut leg height is measured from top of motor mount
 leg_height = 90;
@@ -90,8 +108,13 @@ section_mating_tolerance = 0.28;
 // Steps determine resolution and must be an even integer
 arch_steps = 32;
 
+// Pillar x offset
+pillar_x = 35;
+// Pillar y offset
+pillar_y = 22;
+
 /* [Hidden] */
-model_ver = 3;
+model_ver = 4;
 
 /*
 ********** Version history **********
@@ -105,6 +128,8 @@ Version  Changes
          which invalidates all previously printed
          parts. Needed to accommodate 3.5mm female
          connectors.
+4        Pillar_x and pillar_y changed to accommodate
+         actual pixhawk width
 *************************************
 */
 /* 
@@ -224,6 +249,7 @@ module new_end_unit()
                     translate([0,0,-0.2])
                         cylinder(r=4.5, h=arch_wall * 1.5, $fn=50);
                     // Motor holes are spaced 19 and 16mm apart.
+                    // FIXME also support 16x16
                     // Looking down from the top, the longer
                     // (19mm) axis will be at the bottom left
                     // where the mount meets the end piece.
@@ -636,10 +662,10 @@ module new_body()
         nut_trap(40, hw - 2.5 * noff, false);
         nut_trap(-40, hw - 2.5 * noff, false);
         // Add mounting holes for Pixhawk standoff pillars
-        nut_trap(-33, 22, true);
-        nut_trap(-33, -22, true);
-        nut_trap(33, 22, true);
-        nut_trap(33, -22, true);
+        nut_trap(-pillar_x, pillar_y, true);
+        nut_trap(-pillar_x, -pillar_y, true);
+        nut_trap(pillar_x, pillar_y, true);
+        nut_trap(pillar_x, -pillar_y, true);
         // Add mounting holes for battery holder
         nut_trap(30, 60, false);
         nut_trap(30, -60, false);
@@ -689,11 +715,13 @@ module new_body()
     [x] ESC arches are not tall enough to manage insertion angle
     
     Defects in second print (v2):
-    [ ] ESC pocket creates weak spot where strut mount protrusions have no structural connection
+    [x] ESC pocket creates weak spot where strut mount protrusions have no structural connection
     [x] Corner pillars on battery holder are too thin. Print had layer separation but still too thin
     [x] Battery holder wall supports are too thin (no longer exist - use support everywhere)
     [x] Unbundle battery holder
     
+    Changes to third print (v3):
+    [x] Pillar X offsets changed for Pixhawk actual width (drill)
     */
 }
 
@@ -727,8 +755,24 @@ module top_shell_pillar(z_trans, x_off, y_off, base_radius, y_scale, z_scale)
 {
     ztrans2 = (z_trans < 0) ? z_trans : -z_trans;
     echo("z_trans", z_trans, "ztrans2", ztrans2);
-    #translate([x_off, y_off, ztrans2])
-        cylinder(r=6, h=abs(z_trans), $fn=6);
+    difference()
+    {
+        translate([x_off, y_off, ztrans2])
+            cylinder(r=6, h=abs(z_trans), $fn=6);
+        translate([x_off, y_off, ztrans2 + 4])
+            linear_extrude(height=6)
+                polygon(points=[
+                [0,-nut_trap_radius-0.9],
+                [nut_slot_width/2 + 0.1, -1.8],
+                [nut_slot_width/2 + 0.1, 20],
+                [-nut_slot_width/2 - 0.1, 20],
+                [-nut_slot_width/2 - 0.1, -1.8]
+                ]);
+        // Cut bottom hole to extend up so we can
+        // accommodate longer bolts
+        translate([x_off, y_off, ztrans2 - 0.1])
+            cylinder(r=screw_radius+0.1, h=24, $fn=50);
+    }
     intersection()
     {
         scale([1,y_scale,z_scale])
@@ -745,6 +789,7 @@ module top_shell(flipped)
     y_scale = 1.8;
     z_scale = 0.6;
     y_rot = flipped ? 180 : 0;
+    // Effective height of pillars
     z_trans = flipped ? -50 : 50;
     translate([0,0,z_trans])
     rotate([0,y_rot,0])
@@ -758,20 +803,204 @@ module top_shell(flipped)
             sphere(r=base_radius - 1.8, $fn=50);
         translate([0,0,-base_radius*0.6])
             cube([4*base_radius, 4*base_radius, 2*base_radius*0.6], center=true);
+          // Arm switch hole
+          translate([0,44,5])
+            rotate([-15,0,0])
+                cylinder(r=4, h=50, $fn=50);
       }
-      top_shell_pillar(z_trans, -33, 22, base_radius, y_scale, z_scale);
-      top_shell_pillar(z_trans, -33, -22, base_radius, y_scale, z_scale);
-      top_shell_pillar(z_trans, 33, 22, base_radius, y_scale, z_scale);
-      top_shell_pillar(z_trans, 33, -22, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, -pillar_x, pillar_y, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, -pillar_x, -pillar_y, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, pillar_x, pillar_y, base_radius, y_scale, z_scale);
+      top_shell_pillar(z_trans, pillar_x, -pillar_y, base_radius, y_scale, z_scale);
+      if (faa_id != "")
+      {
+        translate([26,0,21])
+          rotate([23,0,90])
+            linear_extrude(2) text(faa_id, size=5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+      }
+      if (owner_name != "")
+      {
+      }
   }
 }
 
-module tower_pixhawk(flipped)
+module tower_pixhawk(flipped, with_base, with_top)
 {
+    if (flight_controller_type == "pixhawk1")
+        tower_pixhawk1(flipped, with_base, with_top);
+}
+
+module tower_pixhawk1(flipped, with_base, with_top)
+{
+    ph_len = 84;
+    ph_height = 18;
+    ph_usb = 4; // height for usb connector clearance
+    ph_width = 52;
+    ph_waist = 45;
+    ph_waist_top = 22; // Distance from top (and bottom) for start of waist
+    ph_base_thickness = 2.5;
+    ph_wall_thickness = 3;
+    if (with_base)
+    {
+    // Attachments to towers
+    tower_spacer(pillar_x,pillar_y,0,ph_height + ph_base_thickness);
+    tower_spacer(-pillar_x,pillar_y,0,ph_height + ph_base_thickness);
+    tower_spacer(pillar_x,-pillar_y,0,ph_height + ph_base_thickness);
+    tower_spacer(-pillar_x,-pillar_y,0,ph_height + ph_base_thickness);
+    // Baseplate with connecting arms
+    linear_extrude(height=ph_base_thickness)
+        polygon(points=[
+            //[33-6.4, 22],
+            //[33, 22-6.4],
+            [ph_width/2 + ph_wall_thickness, ph_len/2-6],
+            [ph_width/2 + ph_wall_thickness, -ph_len/2+6],
+            //[33, -22+6.4],
+            //[33-6.4, -22],
+            [ph_width/2 - 6, -ph_len/2],
+            [-ph_width/2 + 6, -ph_len/2],
+            [-ph_width/2 - ph_wall_thickness, -ph_len/2+6],
+            [-ph_width/2 - ph_wall_thickness, ph_len/2-6],
+            [-ph_width/2 + 6, ph_len/2],
+            [ph_width/2 - 6, ph_len/2]
+        ]);
+    // Waist retainer walls
+    translate([0,0,ph_base_thickness])
+    {
+        linear_extrude(height=ph_usb)
+            polygon(points=[
+                [-ph_waist/2,ph_len/2-ph_waist_top],
+                [-ph_waist/2,-ph_len/2+ph_waist_top],
+                [-ph_waist/2-ph_wall_thickness,-ph_len/2+ph_waist_top],
+                [-ph_waist/2-ph_wall_thickness,ph_len/2-ph_waist_top]
+            ]);
+        linear_extrude(height=ph_usb)
+            polygon(points=[
+                [ph_waist/2,ph_len/2-ph_waist_top],
+                [ph_waist/2,-ph_len/2+ph_waist_top],
+                [ph_waist/2+ph_wall_thickness,-ph_len/2+ph_waist_top],
+                [ph_waist/2+ph_wall_thickness,ph_len/2-ph_waist_top]
+            ]);
+    }
+    } // with_base
+    if (with_top)
+    {
+    // Use -100 x to make printable
+    translate([0,0,ph_base_thickness + ph_height])
+        tower_pixhawk1_top(ph_len+1.5, ph_width+6, ph_len-1.5, ph_waist, 2);
+    }
+    echo("total ph height=", 2 + ph_height + ph_base_thickness);
+}
+
+// Top retainer for pixhawk1
+module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness)
+{
+    difference()
+    {
+    linear_extrude(height=thickness)
+        polygon(points=[
+        [width/2,length/2],
+        [width/2,-length/2],
+        [-width/2,-length/2],
+        [-width/2,length/2]
+        ]);
+        translate([0,0,-0.1])
+            linear_extrude(height=thickness+1)
+                polygon(points=[
+                [cutout_width/2,cutout_len/2],
+                [cutout_width/2,-cutout_len/2],
+                [-cutout_width/2,-cutout_len/2],
+                [-cutout_width/2,cutout_len/2]
+                ]);
+    }
+    tower_spacer(pillar_x, pillar_y, 0, thickness);
+    tower_spacer(pillar_x, -pillar_y, 0, thickness);
+    tower_spacer(-pillar_x, pillar_y, 0, thickness);
+    tower_spacer(-pillar_x, -pillar_y, 0, thickness);
 }
 
 module tower_gps(flipped)
 {
+    if (gps_type == "3dr/ublox")
+        tower_gps_3dr(flipped);
+}
+
+module tower_gps_3dr(flipped)
+{
+    thickness = 4;
+    translate([0,0,46])
+    {
+        difference()
+        {
+            union()
+            {
+        tower_spacer(pillar_x, pillar_y, 0, thickness);
+        tower_spacer(pillar_x, -pillar_y, 0, thickness);
+        tower_spacer(-pillar_x, pillar_y, 0, thickness);
+        tower_spacer(-pillar_x, -pillar_y, 0, thickness);
+        // Bottom platform
+        linear_extrude(height=thickness)
+            polygon(points=[
+            [pillar_x+4.5, pillar_y-5.5],
+            [-pillar_x-4.5, pillar_y-5.5],
+            [-pillar_x-4.5, -pillar_y+5.5],
+            [pillar_x+4.5, -pillar_y+5.5]
+            ]);
+        // GPS board holder
+        translate([0,0,15.5])
+          rotate([0,0,-45])
+            difference()
+            {
+                translate([0,0,10.25/2]) cube([33.75,33.75,10.25], center=true);
+                translate([0,0,10.25/2 + 10.25-5]) cube([32,32,10.25], center=true);
+                translate([0,0,10.25/2 + 1.75]) cube([31,31,10.25], center=true);
+                // Rear exit for cables
+                translate([0,0,10.25/2 + 1.75])
+                  rotate([0,0,-45])
+                    translate([-15,0,0])
+                    cube([25,20,10.25], center=true);
+                // Square off back corner
+                translate([0,0,10.25/2 - 0.1])
+                  rotate([0,0,-45])
+                    translate([-24,0,0])
+                        cube([20,20,10.26], center=true);
+            }
+        // Connect board holder to lower platform
+        linear_extrude(height=15.5)
+            polygon(points=[
+                    [pillar_x - 10, 0],
+                    [pillar_x - 25, pillar_y - 5.5],
+                    [-pillar_x + 25, pillar_y - 5.5],
+                    [-pillar_x + 10, 0],
+                    [-pillar_x + 25, -pillar_y + 5.5],
+                    [pillar_x - 25, -pillar_y + 5.5]
+                ]);
+        } // Union of holder, platform and connectors
+            translate([0,0,7.9-0.1])
+                cube([30,40,15.8], center=true);
+      } // Difference cutting away center of lower platform
+    }
+}
+
+// Flipped is relevant for positioning
+module tower_spacers(flipped, which_spacer)
+{
+    // Align with one leg of tower
+    if (which_spacer == 1) // lower
+        tower_spacer(pillar_x, pillar_y, -30, 17.5);
+    if (which_spacer == 2) // upper
+        tower_spacer(pillar_x, pillar_y, 22.5, 23.5);
+}
+
+module tower_spacer(xoff, yoff, zoff, length)
+{
+    spacer_outside = 9; // Outside radius of spacer
+    spacer_inside = 6.4; // Outside of pillar plus clearance
+    translate([xoff,yoff,zoff])
+        difference()
+        {
+            cylinder(r=spacer_outside, h=length, $fn=6);
+            translate([0,0,-0.5]) cylinder(r=spacer_inside, h=length+1, $fn=6);
+        }
 }
 
 // Main entry point
@@ -808,9 +1037,9 @@ if (render_shell)
     top_shell(render_body);
 }
 
-if (render_pixhawk)
+if (render_pixhawk || render_pixhawk_top)
 {
-    tower_pixhawk(render_body);
+    tower_pixhawk(render_body, render_pixhawk, render_pixhawk_top);
 }
 
 if (render_gps)
@@ -818,10 +1047,10 @@ if (render_gps)
     tower_gps(render_body);
 }
 
-// May not be needed
-//if (render_spacers)
-//{
-//}
+if (render_spacers)
+{
+    tower_spacers(render_body, render_spacers);
+}
 
 if (render_span_test)
 {
