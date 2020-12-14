@@ -687,6 +687,23 @@ module new_body()
     // Version stamp
     translate([0,hw-6,body_platform_thickness])
         linear_extrude(1) text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
+    // Maker info
+    translate([0,hw-12.5,body_platform_thickness])
+        linear_extrude(1) text("design by papergeek", size=2.5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+    // FAA id on trailing edge
+    if (faa_id != "")
+    {
+        translate([0,-hw+4,body_platform_thickness])
+            linear_extrude(1)
+                text(faa_id, size=5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+    }
+    // Owner info on front edge of PD
+    if (owner_name != "")
+    {
+        translate([0,hw-63,body_platform_thickness])
+            linear_extrude(1)
+                text(owner_name, size=3, font="Liberation Mono:style=Regular", halign="center");
+    }
     /*
     Here's the list of items we need to attach:
     Bottom (here in new_body):
@@ -696,7 +713,7 @@ module new_body()
     [x] 4 ESCs
     Top:
     [ ] Receiver + antenna
-    [ ] Flight controller (PixHawk)
+    [X] Flight controller (PixHawk)
     [ ] Power converter
     [ ] Flight converter adapter
     [ ] Telemetry transceiver + antenna
@@ -704,7 +721,8 @@ module new_body()
     [ ] FPV transceiver + antenna
     [ ] Camera mount
     Shell:
-    [ ] GPS receiver / compass
+    [X] GPS receiver / compass
+    [X] Arm switch mount hole
     
     Defects found in first print (v1):
     [x] Battery holder opening did not come out
