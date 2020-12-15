@@ -168,6 +168,13 @@ module arch_poly(base,height,A)
     ]);
 }
 
+// Render 3D text to specified height. Rotate and translate are up to the caller, but we have a lot of text parameters
+module text_solid(txt, sz, height=1)
+{
+    linear_extrude(height) 
+        text(txt, size=sz, font="Liberation Mono:style=Regular", halign="center", valign="center");
+}
+
 // Flattening object - if 0 (default), none, 1=z offset (strut protrusion), 2=y offset (body), 3=none (end unit or strut receptacle)
 module screw_mount_flattener(flattener_type, y_offset, L, R)
 {
@@ -681,28 +688,45 @@ module new_body()
         // More mounting holes on trailing edge
         nut_trap(-15, -hw+12, true);
         nut_trap(15, -hw+12, true);
-    }
+        // Also in raised lettering below
+        if (faa_id != "")
+        {
+            translate([0,-hw+0.5,body_platform_thickness/2])
+                rotate([90,0,0])
+                    text_solid(faa_id, sz=5);
+        }
+        if (owner_name != "")
+        {
+            translate([hw-0.5,0,body_platform_thickness/2])
+            rotate([0,0,90])
+              rotate([90,0,0])
+                text_solid(owner_name, sz=3);
+            translate([-hw+0.5,0,body_platform_thickness/2])
+            rotate([0,0,270])
+              rotate([90,0,0])
+                text_solid(owner_name, sz=3);
+        }
+    } // Difference
     // Battery holder is now separate
     //battery_holder(body_width);
     // Version stamp
     translate([0,hw-6,body_platform_thickness])
-        linear_extrude(1) text(str("v", model_ver), size=8, font="Liberation Mono:style=Regular", halign="center", valign="center");
+        text_solid(str("v", model_ver), sz=8);
     // Maker info
     translate([0,hw-12.5,body_platform_thickness])
-        linear_extrude(1) text("design by papergeek", size=2.5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+        text_solid("design by papergeek", sz=2.5);
     // FAA id on trailing edge
     if (faa_id != "")
     {
         translate([0,-hw+4,body_platform_thickness])
-            linear_extrude(1)
-                text(faa_id, size=5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+            text_solid(faa_id, sz=5);
     }
-    // Owner info on front edge of PD
+    // Owner info on front edge of PD (raised)
+    // and on sides (engraved, above in difference block)
     if (owner_name != "")
     {
-        translate([0,hw-63,body_platform_thickness])
-            linear_extrude(1)
-                text(owner_name, size=3, font="Liberation Mono:style=Regular", halign="center");
+        translate([0,hw-62,body_platform_thickness])
+            text_solid(owner_name, sz=3);
     }
     /*
     Here's the list of items we need to attach:
@@ -834,7 +858,7 @@ module top_shell(flipped)
       {
         translate([26,0,21])
           rotate([23,0,90])
-            linear_extrude(2) text(faa_id, size=5, font="Liberation Mono:style=Regular", halign="center", valign="center");
+            text_solid(faa_id, sz=5, height=2);
       }
       if (owner_name != "")
       {
