@@ -516,14 +516,22 @@ module battery_holder_parms(width, height, length)
         translate([0,-2.75,height/2 + surface_offset -0.01])
             cube([width, length, height+0.02], center=true);
         // Reduce screw bulkheads
-        #translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+        translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
-       #translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+       translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([-mount_spacing_x/2 - 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         translate([-mount_spacing_x/2 - 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
+        // Chop off corner of screw bulkhead to allow space for ESC holders
+        /*#rotate([0,0,45])
+            translate([length/4+25,sin(45)*(length/4-20),10])
+               cube([10,10,10], center=true);*/
+        for (a = [10, 80, 190, 260])
+            rotate([0,0,45])
+                translate([length*0.45*cos(a),length*0.45*sin(a),0])
+                    cube([10,10,10], center=true);
         // Cut out sides
         for (y=[0, 1, 2, 3])
         {
@@ -762,8 +770,10 @@ module new_body()
     [x] Battery holder wall supports are too thin (no longer exist - use support everywhere)
     [x] Unbundle battery holder
     
-    Changes to third print (v3):
+    Changes and defects in v3 (fixed in v4):
     [x] Pillar X offsets changed for Pixhawk actual width (drill)
+    [x] (Pixhawk) Shifted to rear to avoid USB port being obscured by pillar
+    [x] (Battery holder) Clipped attachment feet
     */
 }
 
@@ -878,11 +888,12 @@ module tower_pixhawk(flipped, with_base, with_top)
 module tower_pixhawk1(flipped, with_base, with_top)
 {
     ph_len = 84;
-    ph_height = 18;
+    ph_height = 17.5;
     ph_usb = 4; // height for usb connector clearance
     ph_width = 52;
-    ph_waist = 45;
-    ph_waist_top = 22; // Distance from top (and bottom) for start of waist
+    ph_waist = 45; // Width of waist
+    ph_waist_len = 41; // Length of waist
+    ph_waist_top = 32; // Distance from top (forward edge) for start of waist
     ph_base_thickness = 2.5;
     ph_wall_thickness = 3;
     if (with_base)
@@ -914,31 +925,34 @@ module tower_pixhawk1(flipped, with_base, with_top)
         linear_extrude(height=ph_usb)
             polygon(points=[
                 [-ph_waist/2,ph_len/2-ph_waist_top],
-                [-ph_waist/2,-ph_len/2+ph_waist_top],
-                [-ph_waist/2-ph_wall_thickness,-ph_len/2+ph_waist_top],
+                [-ph_waist/2,ph_len/2-ph_waist_top-ph_waist_len],
+                [-ph_waist/2-ph_wall_thickness,ph_len/2-ph_waist_top-ph_waist_len],
                 [-ph_waist/2-ph_wall_thickness,ph_len/2-ph_waist_top]
             ]);
         linear_extrude(height=ph_usb)
             polygon(points=[
                 [ph_waist/2,ph_len/2-ph_waist_top],
-                [ph_waist/2,-ph_len/2+ph_waist_top],
-                [ph_waist/2+ph_wall_thickness,-ph_len/2+ph_waist_top],
+                [ph_waist/2,ph_len/2-ph_waist_top-ph_waist_len],
+                [ph_waist/2+ph_wall_thickness,ph_len/2-ph_waist_top-ph_waist_len],
                 [ph_waist/2+ph_wall_thickness,ph_len/2-ph_waist_top]
             ]);
     }
     } // with_base
     if (with_top)
     {
+        // Length difference. Shift offset for centered cube is cutout_offset/2
+        cutout_offset = (ph_len - ph_waist_len)/2 - ph_waist_top;
     // Use -100 x to make printable
     translate([0,0,ph_base_thickness + ph_height])
-        tower_pixhawk1_top(ph_len+1.5, ph_width+6, ph_len-1.5, ph_waist, 2);
+        tower_pixhawk1_top(ph_len+6 + abs(cutout_offset), ph_width+6, ph_len-2, ph_waist, 2, cutout_offset/2);
     }
     echo("total ph height=", 2 + ph_height + ph_base_thickness);
 }
 
 // Top retainer for pixhawk1
-module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness)
+module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness, cutout_top_offset)
 {
+    echo("ph top(", length, width, cutout_len, cutout_width, cutout_top_offset);
     difference()
     {
     linear_extrude(height=thickness)
@@ -948,7 +962,7 @@ module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness)
         [-width/2,-length/2],
         [-width/2,length/2]
         ]);
-        translate([0,0,-0.1])
+        #translate([0,cutout_top_offset,-0.1])
             linear_extrude(height=thickness+1)
                 polygon(points=[
                 [cutout_width/2,cutout_len/2],
