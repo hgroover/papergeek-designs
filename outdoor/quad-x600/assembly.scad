@@ -488,7 +488,7 @@ module battery_holder_parms(width, height, length)
     outside_width = width + 8;
     outside_height = height + 2.5;
     outside_length = length + 2.5; // Only one endwall
-    side_cutout_width = (length - 4 * 6) / 4;
+    side_cutout_width = (length - 4 * 12) / 4;
     side_cutout_height = height - 6 - 6;
     screw_bulkhead_x = 12;
     screw_bulkhead_y = 15;
@@ -498,9 +498,9 @@ module battery_holder_parms(width, height, length)
         union()
         {
         // Construct base
-        for (y = [-length/2 + 0.75, 0, length/2 - 0.75])
+        for (y = [-length/2 + 3, -10, 10, length/2 - 3])
             translate([0,y,surface_offset/2])
-            cube([outside_width + surface_offset, 4, surface_offset], center=true);
+                cube([outside_width + surface_offset/2, 8, surface_offset], center=true);
             // Source material for holder needs to be suspended below platform with room for wires to come out (10-12 AWG main battery wires)
             translate([0,0,outside_height/2 + surface_offset])
                 cube([outside_width, outside_length, outside_height], center=true);
@@ -538,22 +538,32 @@ module battery_holder_parms(width, height, length)
         // Cut out sides
         for (y=[0, 1, 2, 3])
         {
-            translate([0,side_cutout_width/2 - length/2 + 4 + y * (side_cutout_width + 6), side_cutout_height/2 + surface_offset + 6])
+            translate([0,side_cutout_width/2 - length/2 + 8 + y * (side_cutout_width + 12), side_cutout_height/2 + surface_offset + 6])
                 cube([outside_width + 5, side_cutout_width, side_cutout_height], center=true);
             // Cut out bottom
-            translate([0,side_cutout_width/2 - length/2 + 4 + y * (side_cutout_width + 6),
+            translate([0,side_cutout_width/2 - length/2 + 8 + y * (side_cutout_width + 12),
         height])
                 cube([width, side_cutout_width, surface_offset + height], center=true);
         }
         // Drill holes for support attachment
-        #translate([mount_spacing_x/2, mount_spacing_y/2, -0.1])
+        translate([mount_spacing_x/2, mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
-        #translate([mount_spacing_x/2, -mount_spacing_y/2, -0.1])
+        translate([mount_spacing_x/2, -mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
-        #translate([-mount_spacing_x/2, mount_spacing_y/2, -0.1])
+        translate([-mount_spacing_x/2, mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
-        #translate([-mount_spacing_x/2, -mount_spacing_y/2, -0.1])
+        translate([-mount_spacing_x/2, -mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
+    }
+    // Add retainer attachment
+    difference()
+    {
+        translate([0,-outside_length/2 + 8/2,outside_height + surface_offset + 12/2])
+            cube([15,8,12], center=true);
+        translate([0,-outside_length/2 + 10,
+        50])
+            rotate([90,0,0])
+            cylinder(r=3,h=20, $fn=32);
     }
     if (generate_supports)
     {
@@ -698,6 +708,11 @@ module new_body()
         nut_trap(-hw+15, -g/2 + 15, true);
         nut_trap(-hw+15, g/2 - 15, true);
         nut_trap(-hw+57, 0, true);
+        // Add square peg holes for battery retainer
+        translate([-7.5,-hw+14, 4.1])
+            cube([6,6,8.5], center=true);
+        translate([7.5,-hw+14, 4.1])
+            cube([6,6,8.5], center=true);
         // Also in raised lettering below
         if (faa_id != "")
         {
@@ -776,9 +791,9 @@ module new_body()
     [x] Pillar X offsets changed for Pixhawk actual width (drill)
     [x] (Pixhawk) Shifted to rear to avoid USB port being obscured by pillar
     [x] (Battery holder) Clipped attachment feet
-    [ ] (Battery holder) Rear end of frame too flimsy
-    [ ] (Battery holder) Need end closure to retain battery
-    [ ] (Battery holder) Center support snaps off, weak attachment, also covers nut trap for side trays
+    [x] (Battery holder) Rear end of frame too flimsy
+    [x] (Battery holder) Need end closure to retain battery (Holes added, freecad for actual closure)
+    [x] (Battery holder) Center support snaps off, weak attachment, also covers nut trap for side trays
     */
 }
 
