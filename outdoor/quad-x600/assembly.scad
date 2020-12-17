@@ -115,6 +115,8 @@ pillar_y = 22;
 
 /* [Hidden] */
 model_ver = 4;
+// First letter designates the configuration, digits indicate the motor-to-motor span in mm
+model_name = "xke600";
 
 /*
 ********** Version history **********
@@ -130,6 +132,7 @@ Version  Changes
          connectors.
 4        Pillar_x and pillar_y changed to accommodate
          actual pixhawk width
+         Mount points flipped to accommodate more topside mounting
 *************************************
 */
 /* 
@@ -583,7 +586,7 @@ module battery_holder(body_width)
 module nut_trap(xoff, yoff, flipped)
 {
     translate([xoff, yoff, -0.1 + (flipped ? body_platform_thickness + 0.2 : 0)])
-        #rotate([flipped ? 180 : 0, 0, 0]) union()
+        rotate([flipped ? 180 : 0, 0, 0]) union()
         {
             cylinder(r=nut_trap_radius, h=nut_trap_depth, $fn=6);
             translate([0,0,nut_trap_depth-0.1])
@@ -665,17 +668,19 @@ module new_body()
         nut_trap(-g/2 + noff2, -hw + noff, false);
         nut_trap(25, -hw + 2 * noff, false);
         nut_trap(-25, -hw + 2 * noff, false);
-        nut_trap(40, -hw + 2.5 * noff, false);
-        nut_trap(-40, -hw + 2.5 * noff, false);
+        nut_trap(40, -hw + 2.5 * noff, true);
+        nut_trap(-40, -hw + 2.5 * noff, true);
+        nut_trap(-15, -hw+12, true);
+        nut_trap(15, -hw+12, true);
         // Front has usual mount holes with some extras
-        nut_trap(g/2 - noff2, hw - noff, false);
-        nut_trap(-g/2 + noff2, hw - noff, false);
+        nut_trap(g/2 - noff2, hw - noff, true);
+        nut_trap(-g/2 + noff2, hw - noff, true);
         nut_trap(15, hw - noff, false);
         nut_trap(-15, hw - noff, false);
         nut_trap(25, hw - 2 * noff, false);
         nut_trap(-25, hw - 2 * noff, false);
-        nut_trap(40, hw - 2.5 * noff, false);
-        nut_trap(-40, hw - 2.5 * noff, false);
+        nut_trap(40, hw - 2.5 * noff, true);
+        nut_trap(-40, hw - 2.5 * noff, true);
         // Add mounting holes for Pixhawk standoff pillars
         nut_trap(-pillar_x, pillar_y, true);
         nut_trap(-pillar_x, -pillar_y, true);
@@ -693,36 +698,33 @@ module new_body()
         nut_trap(-hw+15, -g/2 + 15, true);
         nut_trap(-hw+15, g/2 - 15, true);
         nut_trap(-hw+57, 0, true);
-        // More mounting holes on trailing edge
-        nut_trap(-15, -hw+12, true);
-        nut_trap(15, -hw+12, true);
         // Also in raised lettering below
         if (faa_id != "")
         {
             translate([0,-hw+0.5,body_platform_thickness/2])
-                rotate([90,0,0])
+                rotate([90,180,0])
                     text_solid(faa_id, sz=5);
         }
         if (owner_name != "")
         {
             translate([hw-0.5,0,body_platform_thickness/2])
             rotate([0,0,90])
-              rotate([90,0,0])
+              rotate([90,180,0])
                 text_solid(owner_name, sz=3);
             translate([-hw+0.5,0,body_platform_thickness/2])
             rotate([0,0,270])
-              rotate([90,0,0])
+              rotate([90,180,0])
                 text_solid(owner_name, sz=3);
         }
     } // Difference
     // Battery holder is now separate
     //battery_holder(body_width);
-    // Version stamp
+    // Model number and version stamp
     translate([0,hw-6,body_platform_thickness])
-        text_solid(str("v", model_ver), sz=8);
+        text_solid(str(model_name, " v", model_ver), sz=3);
     // Maker info
     translate([0,hw-12.5,body_platform_thickness])
-        text_solid("design by papergeek", sz=2.5);
+        text_solid("design by papergeek", sz=2.0);
     // FAA id on trailing edge
     if (faa_id != "")
     {
@@ -774,6 +776,9 @@ module new_body()
     [x] Pillar X offsets changed for Pixhawk actual width (drill)
     [x] (Pixhawk) Shifted to rear to avoid USB port being obscured by pillar
     [x] (Battery holder) Clipped attachment feet
+    [ ] (Battery holder) Rear end of frame too flimsy
+    [ ] (Battery holder) Need end closure to retain battery
+    [ ] (Battery holder) Center support snaps off, weak attachment, also covers nut trap for side trays
     */
 }
 
