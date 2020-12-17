@@ -498,7 +498,9 @@ module battery_holder_parms(width, height, length)
         union()
         {
         // Construct base
-        for (y = [-length/2 + 3, -10, 10, length/2 - 3])
+        // Removed center span support as they are not serving
+        // a structural purpose without any attachment
+        for (y = [-length/2 + 3, /* -10, 10,*/ length/2 - 3])
             translate([0,y,surface_offset/2])
                 cube([outside_width + surface_offset/2, 8, surface_offset], center=true);
             // Source material for holder needs to be suspended below platform with room for wires to come out (10-12 AWG main battery wires)
@@ -519,13 +521,13 @@ module battery_holder_parms(width, height, length)
         translate([0,-2.75,height/2 + surface_offset -0.01])
             cube([width, length, height+0.02], center=true);
         // Reduce screw bulkheads
-        translate([mount_spacing_x/2 + 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+        translate([mount_spacing_x/2 + 2.5, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
-       translate([mount_spacing_x/2 + 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+       translate([mount_spacing_x/2 + 2.5, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
-        translate([-mount_spacing_x/2 - 1, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
+       translate([-mount_spacing_x/2 - 2.5, mount_spacing_y/2 - 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
-        translate([-mount_spacing_x/2 - 1, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
+       translate([-mount_spacing_x/2 - 2.5, -mount_spacing_y/2 + 2.5, surface_offset/2 + 3])
             cube([screw_bulkhead_x,screw_bulkhead_y,surface_offset], center=true);
         // Chop off corner of screw bulkhead to allow space for ESC holders
         /*#rotate([0,0,45])
@@ -542,9 +544,13 @@ module battery_holder_parms(width, height, length)
                 cube([outside_width + 5, side_cutout_width, side_cutout_height], center=true);
             // Cut out bottom
             translate([0,side_cutout_width/2 - length/2 + 8 + y * (side_cutout_width + 12),
-        height])
+        height+8])
                 cube([width, side_cutout_width, surface_offset + height], center=true);
         }
+        // Cut bottom of center supports for clearance above
+        // top of power distro board
+        // FIXME make this a parameter
+        //#cube([50,50,10], center=true);
         // Drill holes for support attachment
         translate([mount_spacing_x/2, mount_spacing_y/2, -0.1])
             cylinder(r=screw_radius, h=surface_offset + 1, $fn=48);
