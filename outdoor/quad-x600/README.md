@@ -130,10 +130,15 @@ Most of the parts are already rendered and saved as STL files. You'll need these
  1x battery holder			battery-holder-5000.stl
  1x GPS holder				gps.stl
  
+Note that the body can be customized with your FAA certificate number and identifying information.
+These items can be entered in the Identifying info section of the OpenSCAD customizer.
+
 Some accessory parts are in xke600-accessories.FCStd
  1x battery retainer		battery-retainer.stl
  
 Print settings should generally be 50% infill, support touching print bed (required for body, struts and shell).
 Brims recommended, particularly for PETG or using glass bed.
+
+Slicing was done with Cura 4.8.
 
  
