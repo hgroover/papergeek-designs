@@ -2,8 +2,7 @@
 
 Updated 29 December 2020.
 
-Intro
-=====
+## Intro
 
 This project is a 3D-printed "X" configuration quadcopter. An "X" configuration is one of the most common
 configurations for ready-to-fly quad UAVs (drones) and basically has arms at 90 degree angles to each other
@@ -13,8 +12,7 @@ two front arms.
 The X stands for the configuration ("X") and 600 refers to the span in millimeters from the center of
 one propeller to the center of the opposite propeller.
 
-Design
-======
+## Design
 
 All design is in OpenSCAD with some of the accessories done in FreeCAD. Both are available for all
 supported platforms (Linux, Windows and Mac). The basic airframe design philosophy is a compromise
@@ -62,8 +60,7 @@ pressed against the inside of the shell serves two purposes:
  The GPS module is meant to be removed from whatever shell it may have come in. Hotglue may
  be useful for keeping the GPS module in place during assembly but may not be required.
  
-Comparison with other 3D-printed designs
-========================================
+## Comparison with other 3D-printed designs
  
  I found one other OpenSCAD-based project on Thingiverse which was appealling but didn't
  entirely suit my needs, so set out to design this. I had purchased a "carbon friber"
@@ -72,8 +69,7 @@ Comparison with other 3D-printed designs
  3D-printed parts. Once I put everything together it flew quite nicely but accessorization
  required more 3D printing, and I also prefer the X configuration over +.
  
-Hardware needed
-===============
+## Hardware needed
  
  All of the screws listed are M3, and all nuts should be M3 nuts with nylon inserts. Anything
  subject to vibration should use nylon insert nuts as they are less prone to loosening. Alternatively
@@ -86,8 +82,7 @@ Hardware needed
 * M3x10
 * M3x8
  
-Flight components
-=================
+## Flight components
  
  Many of these are still being evaluated. My original kit came with 1000kv motors, although 920kv
  may be more appropriate.
@@ -115,20 +110,19 @@ Flight components
 * Optional GoPro or similar camera
 * Arm switch and buzzer for flight controller
  
-Printing parts
-==============
+## Printing parts
  
 Most of the parts are already rendered and saved as STL files. You'll need these parts from assembly.scad
 
 | Qty | Description			| Filename |
 | --- | -----------			| -------- |
-| 4x  | end assembly		| end-assembly.stl |
-| 4x  | strut				| strut-assembly.stl |
+| 4x  | end assembly		| end-assembly.stl ![End](images/end.png "End assembly with motor mount")|
+| 4x  | strut				| strut-assembly.stl ![Strut](images/strut.png "Strut assembly")|
 | 4x  | upper spacers (TPU) | spacer-upper.stl |
 | 4x  | lower spacers (TPU) | spacer-lower.stl |
 | 1x  | pixhawk 			| pixhawk.stl |
 | 1x  | pixhawk top			| pixhawk-top.stl |
-| 1x  | shell (recommended light color filament for maximum translucency) | shell.stl |
+| 1x  | shell (recommended light color filament for maximum translucency) | shell.stl ![Shell](images/shell.png "Shell")|
 | 1x  | battery holder		| battery-holder-5000.stl |
 | 1x  | GPS holder			| gps.stl |
  
@@ -136,6 +130,7 @@ Note that the body can be customized with your FAA certificate number and identi
 These items can be entered in the Identifying info section of the OpenSCAD customizer.
 
 Some accessory parts are in xke600-accessories.FCStd
+![Accessories](images/accessories-all.png "Accessories created in FreeCAD")
 
 | Qty | Description			| Filename |
 | --- | -----------			| -------- |
