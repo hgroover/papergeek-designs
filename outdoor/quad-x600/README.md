@@ -1,13 +1,14 @@
-XKE600 quadcopter notes
+# XKE600 quadcopter notes
 
-Updated 22 December 2020.
+Updated 29 December 2020.
 
 Intro
 =====
 
 This project is a 3D-printed "X" configuration quadcopter. An "X" configuration is one of the most common
-configurations for ready-to-fly UAVs (drones) and basically has arms at 90 degree angles to each other
-with powered propellers at the end of all 4.
+configurations for ready-to-fly quad UAVs (drones) and basically has arms at 90 degree angles to each other
+with powered propellers at the end of all 4. The direction of travel is at a 45-degree angle to each of the
+two front arms.
 
 The X stands for the configuration ("X") and 600 refers to the span in millimeters from the center of
 one propeller to the center of the opposite propeller.
@@ -80,10 +81,10 @@ Hardware needed
  vibration over time. Nylon insert nuts have a higher profile than regular hex nuts, and all the
  nut traps in this design should be able to accommodate them.
  
- M3x30
- M3x12
- M3x10
- M3x8
+* M3x30
+* M3x12
+* M3x10
+* M3x8
  
 Flight components
 =================
@@ -91,50 +92,57 @@ Flight components
  Many of these are still being evaluated. My original kit came with 1000kv motors, although 920kv
  may be more appropriate.
  
- 5000mAh 3S lipo battery (XT60 connectors seem to be the most popular nowadays)
- Power distribution board
- 4x 30A ESC (electronic speed controller)
- Radio unit and receiver with at least 6 channels (I have a Turnigy 9X but there are better ones 
+* 5000mAh 3S lipo battery (XT60 connectors seem to be the most popular nowadays)
+* Power distribution board
+* 4x 30A ESC (electronic speed controller)
+* Radio unit and receiver with at least 6 channels (I have a Turnigy 9X but there are better ones 
  available for a similar price as of this writing, and for around USD $150 there are radios which
  support telemetry)
- Flight controller (I have a Pixhawk 1).
- Power adapter for flight controller and radio receiver
- Telemetry for base station and UAV, with antenna (optional - I have a 915mhz unit which operates
+* Flight controller (I have a Pixhawk 1).
+* Power adapter for flight controller and radio receiver
+* Telemetry for base station and UAV, with antenna (optional - I have a 915mhz unit which operates
  at 5V rather than the 3.3V used by my flight controller, so it needs a $10 TTL level shifter
  board)
- GPS module (I have the discontinued 3DR uBlox-based module with a small rechargeable battery backup)
- 4x 1000kv brushless motors - the current design accommodates the 16x19 motor mount with screws going
+* GPS module (I have the discontinued 3DR uBlox-based module with a small rechargeable battery backup)
+* 4x 1000kv brushless motors - the current design accommodates the 16x19 motor mount with screws going
  up directly through the printed end units - the X-shaped metal mount that usually comes with the motor
  is not needed.
- 2x CW and 2x CCW propellers. Currently using Gemfan 1045 (10 inch with 4.5 pitch). Note that the propeller
+* 2x CW and 2x CCW propellers. Currently using Gemfan 1045 (10 inch with 4.5 pitch). Note that the propeller
  span is determined by design although longer struts could accommodate larger props. Also the pitch and
  prop size need to be matched to the battery, ESC and motor combination, otherwise you could have poor
  responsiveness and/or flight times.
- Optional FPV
- Optional GoPro or similar camera
- Arm switch and buzzer for flight controller
+* Optional FPV
+* Optional GoPro or similar camera
+* Arm switch and buzzer for flight controller
  
 Printing parts
 ==============
  
 Most of the parts are already rendered and saved as STL files. You'll need these parts from assembly.scad
 
- 4x end assembly			end-assembly.stl
- 4x strut					strut-assembly.stl
- 4x upper spacers (TPU) 	spacer-upper.stl
- 4x lower spacers (TPU) 	spacer-lower.stl
- 1x pixhawk 				pixhawk.stl
- 1x pixhawk top				pixhawk-top.stl
- 1x shell (recommended light color filament for maximum translucency)
-							shell.stl
- 1x battery holder			battery-holder-5000.stl
- 1x GPS holder				gps.stl
+| Qty | Description			| Filename |
+| --- | -----------			| -------- |
+| 4x  | end assembly		| end-assembly.stl |
+| 4x  | strut				| strut-assembly.stl |
+| 4x  | upper spacers (TPU) | spacer-upper.stl |
+| 4x  | lower spacers (TPU) | spacer-lower.stl |
+| 1x  | pixhawk 			| pixhawk.stl |
+| 1x  | pixhawk top			| pixhawk-top.stl |
+| 1x  | shell (recommended light color filament for maximum translucency) | shell.stl |
+| 1x  | battery holder		| battery-holder-5000.stl |
+| 1x  | GPS holder			| gps.stl |
  
 Note that the body can be customized with your FAA certificate number and identifying information.
 These items can be entered in the Identifying info section of the OpenSCAD customizer.
 
 Some accessory parts are in xke600-accessories.FCStd
- 1x battery retainer		battery-retainer.stl
+
+| Qty | Description			| Filename |
+| --- | -----------			| -------- |
+| 1x  | battery retainer	| battery-retainer.stl |
+| 1x  | left tray for receiver, PPM board, etc. | left-tray.stl |
+| 1x  | front tray for power cable management | front-tray.stl |
+| 1x  | right tray for buzzer, telemetry | right-tray.stl |
  
 Print settings should generally be 50% infill, support touching print bed (required for body, struts and shell).
 Brims recommended, particularly for PETG or using glass bed.
