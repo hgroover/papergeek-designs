@@ -21,8 +21,8 @@ render_pixhawk = 0;
 render_pixhawk_top = 0;
 // Render GPS traveller
 render_gps = 0;
-// Render spacers used with attachment tower
-render_spacers = 0; // [0:none, 1:lower, 2:upper]
+// Render spacers used with attachment tower (TPU recommended)
+render_spacers = 0; // [0:none, 1:lower, 2:upper, 3:power cover]
 render_arch_test = 0;
 render_span_test = 0;
 
@@ -1074,6 +1074,22 @@ module tower_spacers(flipped, which_spacer)
         tower_spacer(pillar_x, pillar_y, 0, 17.5);
     if (which_spacer == 2) // upper
         tower_spacer(pillar_x, pillar_y, 40, 10.0-4);
+    if (which_spacer == 3) // power distro board cover
+    {
+        thickness = 1;
+        tower_spacer(pillar_x, pillar_y, 0, thickness);
+        tower_spacer(pillar_x, -pillar_y, 0, thickness);
+        tower_spacer(-pillar_x, pillar_y, 0, thickness);
+        tower_spacer(-pillar_x, -pillar_y, 0, thickness);
+        // Bottom platform
+        linear_extrude(height=thickness)
+            polygon(points=[
+            [pillar_x+4.5, pillar_y-5.5],
+            [-pillar_x-4.5, pillar_y-5.5],
+            [-pillar_x-4.5, -pillar_y+5.5],
+            [pillar_x+4.5, -pillar_y+5.5]
+            ]);
+    }
 }
 
 module tower_spacer(xoff, yoff, zoff, length)
