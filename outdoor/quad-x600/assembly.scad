@@ -766,15 +766,15 @@ module new_body()
     [x] Battery 
     [x] Battery span supports
     [x] 4 ESCs
+    [ ] Camera mount (acc. camera mount)
     Top:
-    [ ] Receiver + antenna
+    [X] Receiver + antenna (acc. left tray)
     [X] Flight controller (PixHawk)
     [ ] Power converter
-    [ ] Flight converter adapter
-    [ ] Telemetry transceiver + antenna
-    [ ] FPV camera
-    [ ] FPV transceiver + antenna
-    [ ] Camera mount
+    [X] PPM encoder (acc. left tray)
+    [X] Telemetry transceiver + antenna (acc. right tray)
+    [X] FPV camera (acc. front tray)
+    [X] FPV transceiver + antenna (acc. front tray)
     Shell:
     [X] GPS receiver / compass
     [X] Arm switch mount hole
@@ -923,6 +923,8 @@ module tower_pixhawk1(flipped, with_base, with_top)
     ph_base_thickness = 2.5;
     ph_wall_thickness = 3;
     if (with_base)
+    translate([0,0,flipped ? -28 : 0])
+    rotate([0,flipped ? 180 : 0, 0]) 
     {
     // Attachments to towers
     tower_spacer(pillar_x,pillar_y,0,ph_height + ph_base_thickness);
@@ -968,8 +970,9 @@ module tower_pixhawk1(flipped, with_base, with_top)
     {
         // Length difference. Shift offset for centered cube is cutout_offset/2
         cutout_offset = (ph_len - ph_waist_len)/2 - ph_waist_top;
+        rotate([0,flipped ? 180 : 0, 0])
     // Use -100 x to make printable
-    translate([0,0,ph_base_thickness + ph_height])
+    translate([0,0,ph_base_thickness + ph_height + (flipped ? 30 : 0)])
         tower_pixhawk1_top(ph_len+6 + abs(cutout_offset), ph_width+6, ph_len-2, ph_waist, 2, cutout_offset/2);
     }
     echo("total ph height=", 2 + ph_height + ph_base_thickness);
@@ -988,7 +991,7 @@ module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness, cutou
         [-width/2,-length/2],
         [-width/2,length/2]
         ]);
-        #translate([0,cutout_top_offset,-0.1])
+        translate([0,cutout_top_offset,-0.1])
             linear_extrude(height=thickness+1)
                 polygon(points=[
                 [cutout_width/2,cutout_len/2],
@@ -1012,6 +1015,7 @@ module tower_gps(flipped)
 module tower_gps_3dr(flipped)
 {
     thickness = 4;
+    rotate([0,flipped ? 180 : 0, 0])
     translate([0,0,46])
     {
         difference()

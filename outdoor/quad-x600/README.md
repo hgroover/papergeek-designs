@@ -144,4 +144,53 @@ Brims recommended, particularly for PETG or using glass bed.
 
 Slicing was done with Cura 4.8.
 
- 
+## Assembly
+
+Holding the flight controller and GPS modules securely and vibration-free
+is critical to smooth flight operations. See [this guide](https://docs.px4.io/v1.11/en/assembly/mount_and_orient_controller.html) for notes on orientation
+and mounting of the Pixhawk flight controller. The Pixhawk (and the GPS unit, and nearly all
+flight controller units) has an orientation mark indicating the direction of flight.
+
+The assembly steps here are given for reference and while some of them must be done
+in a particular sequence, this does not necessarily apply to the entire sequence.
+Steps within each group skip to the next multiple of 10 to avoid renumbering
+subsequent groups when new steps are added - there are no missing steps.
+
+Group 1 - shell and controllers
+
+1. Remove the GPS module from any plastic shell it may have come with. Do not connect it to the flight controller yet.
+2. Put the GPS module in the GPS tray, noting that the orientation mark on the GPS module should correspond
+   with the pointed end of the GPS tray. The cables should exit from the flat end as shown.
+3. Ensure that the GPS module fits snugly within the tray with no wiggling from side to side.
+   It must be perfectly flat. The top of the module should protrude above the walls of the tray
+   by about 0.5mm. This will come in contact with the inside bottom of the shell.
+4. Slide the GPS module onto the legs of the shell, with the front (pointed end) of the 
+   tray matching the orientation of the GPS module and the shell. The shell has a direction
+   arrow on top, and a hole for the arm switch in the back.
+5. Slide 4 of the smaller upper spacers onto the shell legs.
+6. All wires for the Pixhawk top need to go through the Pixhawk top retainer piece. They can
+   be connected at this time.
+7. Slide the Pixhawk top onto the shell legs, noting the orientation (indicated by an arrow
+   on the bottom of the top piece).
+8. Place the Pixhawk in the base piece, ensuring that it fits snugly with no wiggle. Note the direction 
+   of the orientation arrow on the Pixhawk, which may be in the opposite direction from any lettering.
+   Most wires will exit to the rear or on the top.
+9. Slide the Pixhawk with the base assembly onto the shell legs, noting the orientation of the
+   Pixhawk matches that of the shell.
+10. Insert locking M3 nuts into the slots near the base of the shell legs. It may help to insert an
+    M3 screw into the bottom to ensure the nuts are seated properly.
+11. Slide the longer lower spacers onto the shell legs.
+12. Slide the flexible power distribution board cover onto the shell legs. Some compression may be required.
+    This step may have to be completed as part of securing the shell to the base.
+
+Group 2 - power distribution and base
+
+20. Secure the power distribution board to the base with 4 M3x8 screws with locking nuts. Most of the
+    power connections should come out on the bottom.
+21. Secure the shell and controllers assembly to the base with 4 M3x12 screws using the locking nuts
+    previously inserted in the shell legs. Ensure that wires exit as expected and are not trapped under
+	the legs before tightening the screws.
+22. Secure the battery holder to the base with 4 M3x10 screws with locking nuts.
+
+	
+
