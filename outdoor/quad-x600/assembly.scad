@@ -1,5 +1,5 @@
 /* [Parts] */
-// Generate intrinsic supports. These will probably not serve as well as what a properly configured slicer can do, with supports only for parts overhanging the bed (specifically, this applies to the power distribution board mount points)
+// Generate intrinsic supports. Deprecated in favor of slicer
 generate_supports = 0;
 
 // Generate intrinsic supports for mating sections
@@ -113,6 +113,9 @@ pillar_x = 35;
 // Pillar y offset
 pillar_y = 22;
 
+// Directional arrows to aid in assembly / orientation
+direction_arrows = 1; // [0:none, 1:show]
+
 /* [Hidden] */
 model_ver = 4;
 // First letter designates the configuration, digits indicate the motor-to-motor span in mm
@@ -142,6 +145,27 @@ Infill 50%, PLA, brim needed on glass.
 Print thin walls needed for Cura!
 ******* end slicing notes *******
 */
+
+// Directional arrow using specified x/y scale and height
+module directional(xy_scale, z_height)
+{
+    if (direction_arrows > 0)
+    {
+        linear_extrude(height=z_height)
+          polygon(points=[
+            [-0.2*xy_scale, -2*xy_scale],
+            [-0.2*xy_scale, 1.97*xy_scale],
+            [-1*xy_scale, 1*xy_scale],
+            [-1.3*xy_scale, 1.06*xy_scale],
+            [-0.1*xy_scale, 2.4*xy_scale],
+            [0.1*xy_scale, 2.4*xy_scale],
+            [1.3*xy_scale, 1.06*xy_scale],
+            [1.0*xy_scale, 1*xy_scale],
+            [0.2*xy_scale, 1.97*xy_scale],
+            [0.2*xy_scale, -2*xy_scale]
+            ]);
+    }
+}
 
 // Parametric arch uses the basic formula of y=Ax^2
 // but A is derived from Vy (vertex y) and Zx (base crossing x)
@@ -719,6 +743,8 @@ module new_body()
             cube([6,6,8.5], center=true);
         translate([7.5,-hw+14, 4.1])
             cube([6,6,8.5], center=true);
+        // Directional arrow embossed into top surface
+        translate([0,hw-6,-1]) directional(2,2);
         // Also in raised lettering below
         if (faa_id != "")
         {
@@ -882,14 +908,17 @@ module top_shell(flipped)
         translate([0,0,-base_radius*0.6])
             cube([4*base_radius, 4*base_radius, 2*base_radius*0.6], center=true);
           // Arm switch hole
-          translate([0,44,5])
-            rotate([-15,0,0])
+          translate([0,-48,5])
+            rotate([15,0,0])
                 cylinder(r=4, h=50, $fn=50);
       }
       top_shell_pillar(z_trans, -pillar_x, pillar_y, base_radius, y_scale, z_scale);
       top_shell_pillar(z_trans, -pillar_x, -pillar_y, base_radius, y_scale, z_scale);
       top_shell_pillar(z_trans, pillar_x, pillar_y, base_radius, y_scale, z_scale);
       top_shell_pillar(z_trans, pillar_x, -pillar_y, base_radius, y_scale, z_scale);
+      translate([0,0,26])
+        rotate([0,0,0])
+        directional(2,2);
       if (faa_id != "")
       {
         translate([26,0,21])
@@ -898,6 +927,9 @@ module top_shell(flipped)
       }
       if (owner_name != "")
       {
+          translate([-16,0,23.5])
+            rotate([-16,0,90])
+                text_solid(owner_name, sz=2.5, height=2);
       }
   }
 }
@@ -914,14 +946,16 @@ module tower_pixhawk(flipped, with_base, with_top)
 module tower_pixhawk1(flipped, with_base, with_top)
 {
     ph_len = 84;
-    ph_height = 17.5;
+    ph_height = 17.0;
     ph_usb = 4; // height for usb connector clearance
     ph_width = 52;
-    ph_waist = 45; // Width of waist
-    ph_waist_len = 41; // Length of waist
+    ph_waist = 44.5; // Width of waist
+    ph_waist_len = 42; // Length of waist
     ph_waist_top = 32; // Distance from top (forward edge) for start of waist
     ph_base_thickness = 2.5;
     ph_wall_thickness = 3;
+    // Y offset for leading edge of pixhawk
+    ph_start = ph_len/2 - ph_waist_top + (ph_len - ph_waist_len) / 2;
     if (with_base)
     translate([0,0,flipped ? -28 : 0])
     rotate([0,flipped ? 180 : 0, 0]) 
@@ -947,7 +981,7 @@ module tower_pixhawk1(flipped, with_base, with_top)
             [-ph_width/2 + 6, ph_len/2],
             [ph_width/2 - 6, ph_len/2]
         ]);
-    // Waist retainer walls
+    // Waist retainer walls and front retainer
     translate([0,0,ph_base_thickness])
     {
         linear_extrude(height=ph_usb)
@@ -964,16 +998,24 @@ module tower_pixhawk1(flipped, with_base, with_top)
                 [ph_waist/2+ph_wall_thickness,ph_len/2-ph_waist_top-ph_waist_len],
                 [ph_waist/2+ph_wall_thickness,ph_len/2-ph_waist_top]
             ]);
+        linear_extrude(height=ph_usb)
+            polygon(points=[
+                [-ph_waist/2,ph_start],
+                [ph_waist/2,ph_start],
+                [ph_waist/2,ph_start+ph_wall_thickness],
+                [-ph_waist/2,ph_start+ph_wall_thickness]
+            ]);
+        // Add directional arrow
+        translate([0,ph_len/2-5,0]) directional(2,1);
     }
     } // with_base
     if (with_top)
     {
-        // Length difference. Shift offset for centered cube is cutout_offset/2
-        cutout_offset = (ph_len - ph_waist_len)/2 - ph_waist_top;
-        rotate([0,flipped ? 180 : 0, 0])
+        // Always flipped
+        rotate([0,180 /*flipped ? 180 : 0*/, 0])
     // Use -100 x to make printable
     translate([0,0,ph_base_thickness + ph_height + (flipped ? 30 : 0)])
-        tower_pixhawk1_top(ph_len+6 + abs(cutout_offset), ph_width+6, ph_len-2, ph_waist, 2, cutout_offset/2);
+        tower_pixhawk1_top(ph_len+16, ph_width+6, ph_len-4, ph_waist - 2, ph_base_thickness, ph_start);
     }
     echo("total ph height=", 2 + ph_height + ph_base_thickness);
 }
@@ -986,24 +1028,49 @@ module tower_pixhawk1_top(length,width,cutout_len,cutout_width, thickness, cutou
     {
     linear_extrude(height=thickness)
         polygon(points=[
-        [width/2,length/2],
-        [width/2,-length/2],
-        [-width/2,-length/2],
-        [-width/2,length/2]
+        [width/2,cutout_top_offset+12],
+        [width/2,cutout_top_offset+12-length],
+        [-width/2,cutout_top_offset+12-length],
+        [-width/2,cutout_top_offset+12]
         ]);
-        translate([0,cutout_top_offset,-0.1])
+        translate([0,0,-0.1])
             linear_extrude(height=thickness+1)
                 polygon(points=[
-                [cutout_width/2,cutout_len/2],
-                [cutout_width/2,-cutout_len/2],
-                [-cutout_width/2,-cutout_len/2],
-                [-cutout_width/2,cutout_len/2]
+                [cutout_width/2,cutout_top_offset-1],
+                [cutout_width/2,cutout_top_offset-1-cutout_len],
+                [-cutout_width/2,cutout_top_offset-1-cutout_len],
+                [-cutout_width/2,cutout_top_offset-1]
                 ]);
     }
+    // Add front retainer block, reduced to allow access to microSD
+    ce_x = (cutout_width + 2) / 2;
+    translate([0,0,-thickness/2])
+        linear_extrude(height=thickness)
+                polygon(points=[
+                [-ce_x,cutout_top_offset+0],
+                [ce_x,cutout_top_offset+0],
+                [ce_x,cutout_top_offset+0+2.5],
+                [-ce_x,cutout_top_offset+0+2.5]
+            ]);
+    // Add rear retainer block
+    translate([0,0,-thickness])
+        linear_extrude(height=thickness*2)
+            polygon(points=[
+                [-ce_x,cutout_top_offset-cutout_len-2],
+                [ce_x,cutout_top_offset-cutout_len-2],
+                [ce_x,cutout_top_offset-cutout_len-4],
+                [-ce_x,cutout_top_offset-cutout_len-4]
+            ]);
+
+    // Connect to towers
     tower_spacer(pillar_x, pillar_y, 0, thickness);
     tower_spacer(pillar_x, -pillar_y, 0, thickness);
     tower_spacer(-pillar_x, pillar_y, 0, thickness);
     tower_spacer(-pillar_x, -pillar_y, 0, thickness);
+    // Add sloped retainers matching base
+    // Add direction arrow
+    translate([0,cutout_top_offset+6,-0.5])
+        directional(2,1);
 }
 
 module tower_gps(flipped)
