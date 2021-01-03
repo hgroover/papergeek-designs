@@ -23,8 +23,8 @@ render_pixhawk_top = 0;
 render_gps = 0;
 // Render spacers used with attachment tower (TPU recommended)
 render_spacers = 0; // [0:none, 1:lower, 2:upper, 3:power cover]
-render_arch_test = 0;
-render_span_test = 0;
+// Test pieces which can be rendered and printed to test fit and hardware
+render_test = "none"; // [none:no test, arch:arch test - outer, arch2:arch test - inner, span:span test for assembled model, nut:nut traps and screws]
 
 /* [Identifying info] */
 
@@ -58,10 +58,10 @@ screw_mask_length = screw_length + 0.2;
 screw_z = 9; 
 
 // Radius of nut trap, measured at largest (point-to-point) diameter of nut. Default is M3 nut with nylon insert
-nut_trap_radius = 3.65;
+nut_trap_radius = 3.45;
 // Depth of nut trap. Generally 2.5mm is enough but nylon insert nuts are deeper. More depth may be needed to keep the nut completely flush.
 nut_trap_depth = 3.6; 
-// With of a slot-type nut trap, which is the flat-to-flat diameter of the nut. Default is for M3 nut
+// With of a slot-type nut trap, which is the flat-to-flat diameter of the nut. Default is for M3 nut. Additional tolerance of 0.1mm added per surface (0.2 overall)
 nut_slot_width = 5.5;
 
 // Strut leg height is measured from top of motor mount
@@ -117,7 +117,7 @@ pillar_y = 22;
 direction_arrows = 1; // [0:none, 1:show]
 
 /* [Hidden] */
-model_ver = 4;
+model_ver = 5;
 // First letter designates the configuration, digits indicate the motor-to-motor span in mm
 model_name = "xke600";
 
@@ -136,6 +136,7 @@ Version  Changes
 4        Pillar_x and pillar_y changed to accommodate
          actual pixhawk width
          Mount points flipped to accommodate more topside mounting
+5        Tightened nut traps
 *************************************
 */
 /* 
@@ -1224,7 +1225,7 @@ if (render_spacers)
     tower_spacers(render_body, render_spacers);
 }
 
-if (render_span_test)
+if (render_test == "span")
 {
     body_width = airframe_body_width();
     #translate([0,-body_width,0]) rotate([-90,0,180])
@@ -1244,21 +1245,38 @@ if (render_span_test)
             cylinder(r=40,h=airframe_span);
 }
 
-if (render_arch_test)
+if (render_test == "arch")
+translate([30,0,0])
+difference()
 {
-    if (render_arch_test == 1)
-    translate([30,0,0])
-    difference()
-    {
-        arch_section(0,30,0);
-        translate([0,0,-0.1]) arch_section(1,31,0);
-    }
-    if (render_arch_test == 2)
-    translate([60,0,0])
-    difference()
-    {
-        echo("inner tolerance:", section_mating_tolerance);
-        arch_section(1,30,section_mating_tolerance);
-        translate([0,0,-0.1]) arch_section(2,31,0);
-    }
+    arch_section(0,30,0);
+    translate([0,0,-0.1]) arch_section(1,31,0);
+}
+if (render_test == "arch2")
+translate([60,0,0])
+difference()
+{
+    echo("inner tolerance:", section_mating_tolerance);
+    arch_section(1,30,section_mating_tolerance);
+    translate([0,0,-0.1]) arch_section(2,31,0);
+}
+
+if (render_test == "nut")
+difference() {
+    // Base piece
+    translate([0,0,body_platform_thickness/2])
+        cube([32,20,body_platform_thickness], center=true);
+    // M3 nut trap and screw through hole. Fits loosely but should prevent turning.
+    nut_trap(-10,0,true);
+    // M2 nut trap for FPV mount. Trays are in FreeCAD file xke600-accessories.FCStd. Nut trap radius of 2.4 will be a tight fit.
+    translate([10,0,-0.1])
+      cylinder(r=1.2, h=40, $fn=50);
+    translate([10,0,body_platform_thickness-2.0])
+        cylinder(r=2.4, h=10, $fn=6);
+    // M3 slot nut trap
+    translate([0,-5,0])
+    cube([nut_slot_width+0.2,5,3*body_platform_thickness], center=true);
+    translate([0,15,body_platform_thickness/2])
+      rotate([90,0,0])
+      cylinder(r=screw_radius, h=30, $fn=50);
 }
