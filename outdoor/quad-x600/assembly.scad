@@ -58,7 +58,7 @@ screw_mask_length = screw_length + 0.2;
 screw_z = 9; 
 
 // Radius of nut trap, measured at largest (point-to-point) diameter of nut. Default is M3 nut with nylon insert
-nut_trap_radius = 3.45;
+nut_trap_radius = 3.4;
 // Depth of nut trap. Generally 2.5mm is enough but nylon insert nuts are deeper. More depth may be needed to keep the nut completely flush.
 nut_trap_depth = 3.6; 
 // With of a slot-type nut trap, which is the flat-to-flat diameter of the nut. Default is for M3 nut. Additional tolerance of 0.1mm added per surface (0.2 overall)
