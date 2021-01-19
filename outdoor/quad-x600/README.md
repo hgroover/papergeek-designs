@@ -168,7 +168,7 @@ Group 1 - shell and controllers
    tray matching the orientation of the GPS module and the shell. The shell has a direction
    arrow on top, and a hole for the arm switch in the back.
 5. Slide 4 of the smaller upper spacers onto the shell legs.
-6. All wires for the Pixhawk top need to go through the Pixhawk top retainer piece. They can
+6. All wires for the Pixhawk top need to go through the Pixhawk top retainer piece. They should all
    be connected at this time.
 7. Slide the Pixhawk top onto the shell legs, noting the orientation (indicated by an arrow
    on the bottom of the top piece).
@@ -191,6 +191,39 @@ Group 2 - power distribution and base
     previously inserted in the shell legs. Ensure that wires exit as expected and are not trapped under
 	the legs before tightening the screws.
 22. Secure the battery holder to the base with 4 M3x10 screws with locking nuts.
-
+    Thread the ESC leads to the motors through the base strut mounts and make sure
+	all wires are in place before tightening the battery holder.
 	
+(after this point in the assembly, remaining groups are not dependent on order)
+
+Group 3 - base trays
+
+30. Right tray attaches with 3 M3x8 screws with locking nuts. Telemetry unit is meant to be toward the back with
+    zip tie mount holes. The antenna is meant to point towards the ground. The buzzer space is on the front of the
+	tray with two holes for self-tapping screws.
+31. Left tray also attaches with 3 M3x8 screws with locking nuts. The radio receiver and PPM converter are meant
+    to go in the main compartment
+32. Attach the FPV camera to the front tray. The FPV camera should have its own mounting hardware.
+    The front tray expects M2 bolts and has nut traps on the bottom for M2 nuts. The nut trap fit is
+	tight, so it may be necessary to first thread the bolt onto the nut before pushing it straight
+	into the trap, then threading the bolt from the top and tightening the nut all the way down before
+	removing it. Remove the bolt before inserting it through the FPV camera mounting plate and it should
+	be able to engage with the nut.
+33. Use zip ties with the provided holes to secure all wires and power converters, as well as the
+    antenna modules.
+
+Group 4 - struts and ends
+
+40. Thread bullet connectors from ESC through base connector which joins with strut.
+	The typical method is to use 3.5mm bullet connectors between the motors and the ESCs. The leads
+	from the motors should be 22cm from the base of the motor to the base of the bullet connectors.
+	The leads from the ESCs should be long enough to reach through the base connectors, typically
+	8cm.
+41. Thread motor wires through rectangular hole in end piece, then through strut, and connect to bullet
+    connectors from ESC. Do not secure motor to end piece until bullet connectors are joined.
+42. Attach motor to end piece using screws provided with motors (16x19mm spacing is the default).
+43.	Connect strut to base using M3x30 screw and one locking nut
+44. Join end piece to strut using M3x30 screw and one locking nut
+
+
 

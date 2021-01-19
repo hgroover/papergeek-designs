@@ -1194,8 +1194,8 @@ if (render_end)
 if (render_body)
 {
     body_width = airframe_body_width();
-    translate([0,render_span_test==0 ? 0 : -body_width/2,0])
-    rotate([0,0,render_span_test==0 ? 0 : 45])
+    translate([0,render_test!= "span" ? 0 : -body_width/2,0])
+    rotate([0,0,render_test != "span" ? 0 : 45])
         new_body();
 }
 
