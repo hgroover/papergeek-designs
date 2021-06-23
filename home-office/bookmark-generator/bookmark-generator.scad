@@ -27,6 +27,7 @@ monogram_x_move = 0;
 // Additional movement for monogram along width
 monogram_y_move = 0; 
 // Use Help / Font list in OpenSCAD to see the exact text for available fonts and styles on your computer
+// Some unicode Sanskrit glyphs a, aa, i, ii, u, uu, ma, maM, ku: अ आ इ ई उ ऊ म मं कु
 monogram_font = "Liberation Mono:style=Regular"; 
 
 module bookmark()
