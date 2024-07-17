@@ -6,8 +6,8 @@ us_measurement = 1; // [0:millimeters, 1:decimal inches]
 // Tolerance - extra space to add for pins. 0 will leave no room for glue. Reduces pin mask polygon corners inwards by this amount on each side.
 tolerance = 0.002;
 
-// Jig thickness
-jig_thickness = 0.5;
+// Jig thickness. Must match with template.
+jig_thickness = 0.570;
 
 // Endstop thickness
 endstop_thickness = 0.5;
@@ -63,6 +63,7 @@ inches_to_mm = 25.4;
  
  There is a much better dovetail jig design which can be adjusted. This is a lazy design meant to be generated for your work parameters, clamped in place, and probably used only 4 times. If you're the type of person who will design and 3d-print something just for a one-off woodworking project, this is probably for you...
  You should still read through this guide as it's written by an experienced woodworker: https://www.instructables.com/3D-Printed-Jig-for-Through-Dovetails-With-Variable/
+ One thing which isn't terribly obvious for dovetail joints is that the width of the dovetail bit (as measured at its widest part) MUST equal the material thickness. The cut height of a dovetail bit should equal the width. The cut height of the straight bit used for pins must equal the material thickness as well. Thus for 3/4" dimensional stock, you want a 3/4" wide dovetail bit and a straight bit with a height of at least 3/4".
  
  Using the dovetail jig
  
@@ -76,7 +77,7 @@ inches_to_mm = 25.4;
      
  Recommended material would be PLA-CF or something with similar strength
  
- A 220x220 printer (I am using the Creality K1C) should be able to handle up to 8 inch board widths (204mm). Turn off brims in the slicer settings.
+ A 220x220 printer (I am using the Creality K1C) should be able to handle up to 8 inch board widths (204mm). Turn off brims in the slicer settings - support required for the pin-side endstop. For full 8-inch width reduce the endstop thickness to 0.4 or 0.3 inches.
 */
 
 function ucnv(local_units) = (us_measurement == 0) ? local_units
@@ -192,13 +193,3 @@ union()
     }
 }
 
-// Example
-/*
-linear_extrude(height=ucnv(jig_thickness))
-    polygon(points=[
-        [0+ucnv(0.8), 0+ucnv(0.8)],
-        [0+ucnv(0.8), 0+ucnv(2.2)],
-        [0+ucnv(5.4), 0+ucnv(2.2)],
-        [0+ucnv(5.4), 0+ucnv(0.8)]
-    ]);
-    */
