@@ -10,7 +10,7 @@ tolerance = 0.002;
 jig_thickness = 0.570;
 
 // Endstop thickness
-endstop_thickness = 0.5;
+endstop_thickness = 0.40;
 
 // Endstop height
 endstop_height = 1.5;
@@ -24,21 +24,24 @@ spine_height = 1.5;
 // Show boards (debugging aid)
 show_boards = 7; // [0:none, 1:material-tails, 2:material-pins, 3:tails+pins, 4:spoiler, 5:spoiler+tails, 6:spoiler+pins, 7:all]
 
+// Spine text size (0 for none)
+spine_text_size = 8;
+
 /* [Router] */
 
 // Dovetail bit width
-router_bit_dovetail_width = 0.75;
+router_bit_dovetail_width = 0.750;
 
 // Dovetail bit angle (degrees)
 router_bit_dovetail_angle = 14;
 
 // Template diameter
-router_template_diameter = 0.625;
+router_template_diameter = 0.750;
 
 /* [Material] */
 
 // Material (board) thickness
-material_thickness = 0.75;
+material_thickness = 0.750;
 
 // Material width
 material_width = 8.0;
@@ -46,11 +49,12 @@ material_width = 8.0;
 /* [Spoiler] */
 
 // Spoiler board thickness
-spoiler_thickness = 0.75;
+spoiler_thickness = 0.750;
 
 /* [Hidden] */
 
 inches_to_mm = 25.4;
+template_diameter_factor = 0.56; // Multiplier for template diameter to ensure a clean cut-through on dovetail
 
 /*
  Through dovetail jig with stops
@@ -114,19 +118,19 @@ echo("tsc",tail_slot_count,"ttw",tail_tooth_width,"ttc",tail_tooth_count,"tep",t
 h1 = router_template_diameter + material_thickness;
 w3 = router_bit_dovetail_width / 2;
 w4 = tan(router_bit_dovetail_angle) * material_thickness;
-w5 = tan(router_bit_dovetail_angle) * router_template_diameter / 2;
+w5 = tan(router_bit_dovetail_angle) * router_template_diameter * template_diameter_factor;
 w1 = w3 + w5;
 w2 = w3 - w4;
 w7 = w2 - w5;
 pin0_center = fingers_bl_x - tail_end_padding - tail_slot_width / 2;
 // Spacing for pins center-to-center
 pin_spacing = tail_tooth_width + tail_slot_width;
-pin_base_y = fingers_bl_y + spoiler_thickness - router_template_diameter / 2;
+pin_base_y = fingers_bl_y + spoiler_thickness - router_template_diameter * template_diameter_factor;
 union()
 {
     // Solid part of the jig
-    translate([0,ucnv(router_template_diameter/2),0])
-        cube([ucnv(material_width + endstop_thickness), ucnv(solid_width-router_template_diameter), ucnv(jig_thickness)]);
+    translate([0,ucnv(router_template_diameter*template_diameter_factor),0])
+        cube([ucnv(material_width + endstop_thickness), ucnv(solid_width-router_template_diameter * 2 * template_diameter_factor), ucnv(jig_thickness)]);
     // endstop covering only center, material and spoiler
     difference()
     {
@@ -191,5 +195,18 @@ union()
                 [ucnv(pin_center+w7-tolerance), ucnv(pin_base_y+h1)]
             ]);
     }
+    if (spine_text_size > 0)
+        translate([0,ucnv(spoiler_thickness*1.15),ucnv(spine_height+jig_thickness)])
+            linear_extrude(1.5)
+                text(
+                //"MT 0.75 TW 0.75 Jg 0.57",
+                str(
+                    "mt=",material_thickness, 
+                    " mw=", material_width,
+                    " dw=", router_bit_dovetail_width,
+                    " ", router_bit_dovetail_angle, "deg",
+                    " td=", router_template_diameter
+                    ),
+                    spine_text_size);
 }
 
