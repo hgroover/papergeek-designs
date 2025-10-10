@@ -1,0 +1,103 @@
+Freecad noob engraving tutorial
+
+This is a very vertical tutorial. It assumes you are impatient like me and you know a little about setting up the 
+Cubiko but maybe nothing about FreeCAD, and you might say "Dammit, I just want to do a simple engraving with open
+source software, how hard can that be???"
+
+Setup
+
+1. Use 2.8mm plywood
+2. Clamp to base with lug under screw
+3. Chuck 20 degree V-bit
+4. Run Z-probe from panel with alligator clip on spindle (which is not rotating)
+4b. Connect in Candle and move Z to safe height
+5. Using panel, Candle or app move X and Y to approximately over left front corner of workpiece
+6. If using panel, check step - default is xC (10mm), change to 1
+7. Move Z down in 1mm increments while watching carefully until visually close (around 1mm) from surface. Adjust X and Y if necessary.
+8. Change step to 0.1mm
+9. Put a piece of paper under bit and move Z down in 0.1mm increments until the paper is gently caught between the bit and the wood
+10. Zero X, Zero Y, Zero Z
+11. Go to safe Z position (should be 30mm above surface - can be less if not using dust shoe)
+
+Freecad
+
+Set up workpiece
+
+1. Edit / Preferences / General - under Default unit system select "Metric small parts & CNC (mm, mm/min)". Click OK.
+2. File / New
+3. Select the Sketcher workbench (dropdown in top left)
+4. Click the "Create Sketch" toolbar icon and select "XY plane" and OK. Now you're in the sketch tool.
+5. Select rectangle tool. Start from origin point and go to 85x85mm (easiest to type in the numbers, 85, tab, 85, enter)
+6. Close sketch
+
+We won't do anything with this sketch - it's just a guide for the size of the workpiece.
+
+Create engraving text
+
+1. Select Draft workbench
+2. Select Shape from string
+3. Click on where you want the lower-left corner of text to start on the workpiece (something like X=4, Y=5 might be good; use x=10,y=10 if you want to make a box around the text)
+4. Enter whatever you like for string. We're using Ahoy!
+5. Height is the height of capital letters, not including descenders like p and g. 10mm is a good choice and it's the default.
+6. For font file you need an actual ttf file. We're using Bitstream Vera Bold (VeraBd.ttf) Click OK when done and the object will appear.
+7. After creating the object, you can modify everything in the Property view under the Data tab. To change the placement go to Placement / Position
+8. Compare your text to the sketch we made for the 85x85 material outline and make sure everything is in bounds
+9. Click on your ShapeString in the Tree view then F2 to rename it. Rename it to Ahoy
+
+(Optional) Create a box around the text
+
+1. Select Sketcher workbench
+2. Make sure the ShapeString we just created isn't selected. Click anywhere outside the ShapeString object in the main window.
+3. Click the "Create Sketch" icon in the toolbar, Sketch orientation: XY plane, then OK
+4. Select the rectangle tool. Click and drag from one corner to another then let go. You should have a rectangle around your text.
+5. If you need to adjust the size of the rectangle, Esc to get out of "adding new rectangle" mode so you can drag the corner handles
+   until the rectangle encloses the text just as you want it.
+6. Skip this next step if you don't want rounded corners.
+7. Select the Fillet icon from the toolbar then click once on each of the four corners.
+8. Click Close to finish editing the sketch
+9. Click on your Sketch001 in the tree view and F2 to rename it. Rename it to TextBox.
+
+
+Prepare CNC job
+
+1. Select CAM workbench
+2. Click the Job icon to create a job. If you didn't already have Ahoy and TextBox selected, you can check them under 2D. We don't need the workpiece
+   guide sketch. Click OK to close the job creation dialog.
+3. The job edit dialog has many tabs. Initially we're in the Setup tab. 
+4. Leave Extend Model's Bounding Box selected but set all 6 values to 0 starting with Ext. X
+5. Go to the Output tab. Select an output filename (the nc extension is common for gcode) and change the processor to GRBL.
+6. Go to the Tools tab. Click TC: Default tool then Edit to bring up the Tool Controller Editor
+7. Enter Horizontal feed 800, Vertical feed 50, spindle 6000 and click OK to close the TC editor
+8. Click OK in the Job edit to finish creating the job. Now there is a job with operations and other sub-objects. It won't do anything yet -
+   we still have to add operations.
+
+Add engraving operations
+
+1. Click the Engrave icon from the toolbar
+2. Click on Depths and enter Start Depth as 0. (Click on blue circle then enter 0)
+3. We'll engrave to a depth of 1.0mm in 5 steps. Enter final depth as -1.0 and step down as 0.2
+4. Click OK to close the engrave operations dialog
+
+Simulate
+
+1. Click on Job in the tree view, then from the app menu Cam / Cam simulator
+2. Click the play button in the path simulator dialog
+3. Click cancel to close the simulator. We don't need to save the simulation.
+
+You don't have to do this every time, it's just good to know it's there if you're not sure whether the CNC tool will do what you want.
+
+Save the gcode
+
+1. Click on job in the tree view, then click the Post process icon in the toolbar
+2. You will get a preview of the gcode that will be sent. Click OK to continue.
+3. Click OK to confirm the save as location.
+
+Finished with Freecad
+
+Candle
+
+1. File / open / select the gcode output from Freecad (with the nc extension)
+2. A preview will be shown in the visualizer.
+3. Look at device state Work coordinates. X, Y and Z should be where you expect.
+4. click Send.
+
