@@ -27,6 +27,7 @@ Nut width (flat to flat): 8mm
 Nut point to point: 8.9
 Nut hex: R=4.6
 Nut height: 2.8mm
+head radius: R=3.3
 Through hole R=2.5mm
 Tap hole R=1.8mm
 
@@ -43,6 +44,7 @@ Tap hole R=1.8mm
 Through hole R=1.8
 Tap hole R=1.53
 Hex button head outside width R=2.3 H=3.3
+Nut hex: R=3.0
 
 #### M2
 
