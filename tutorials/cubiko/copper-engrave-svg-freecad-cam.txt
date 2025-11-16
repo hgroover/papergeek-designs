@@ -1,0 +1,64 @@
+Engraving svg using FreeCAD CAM workbench
+
+Inkscape
+1. Save a copy of your original
+2. Delete ALL layers and objects which are not intended for engraving.
+3. Convert all text objects to paths (select text object, Path / Object to path)
+4. Turn off fill for all objects and set stroke paint to any visible color. Fill doesn't matter
+5. Set stroke style to 1px width (width won't matter)
+
+1. Start FreeCAD 1.0.2
+2. Switch to Draft workbench, top view
+3. Import svg file (use Inkscape svg, make sure any layers you don't want have been DELETED first - save a copy if you have to)
+4. Select import svg as geometry
+5. Select objects (there will be many) in logical groups and use Modify / Draft to sketch. Delete each group of objects after converting them
+5b. Switch to sketch, create new sketch. From 0,0 create two bounding boxes in one sketch, one for the total workpiece, another for the accessible
+    work area (excluding clamps)
+6. Switch to CAM
+7. Create job with sketches sketches selected (which will not be in the right place)
+8. After creating job, go to Job/Model and apply position and scaling
+9. Select each element or group of elements under Model for engraving then click Engraving
+10. Set start depth, end depth (negative), then step (absolute)
+11. Set safe height and clearance height
+12. Repeat 9-11 as needed to create multiple engrave operations
+13. Select job, then Cam / Cam simulator
+14. Cancel simulator when done
+15. Select Job then post process and save gcode
+
+Probe
+G0 X42 Y42 Z5
+G38.2 Z-100 F100
+G0Z1
+G38.2 Z-2 F10
+Zero Z: G92 Z0
+
+Candle
+16. Open FreeCAD output gcode, verify appearance and original
+17. Mount stock, verify correct bit is installed, lug should be firmly attached to stock and alligator clip should be attached to bit
+    On machine's control panel, go to Calibration / Height map and make sure the switch button at the bottom is NOT turned on. This should
+	not be on unless you previously created a height map from the control panel. To the left means off, to the right means on.
+18. Zero XY at lower left
+19. Create heightmap
+20. Border should be already set to the extent of the gcode model. If not, click auto
+21. Set origin to (more or less) the center of your piece
+22. Click Origin to move to the origin then probe Z to zero Z
+23. Set probe gride X and Y to 16 and 16. Zt can be lower, something like 0.6 to save time on the probe. F should be lower than the default, perhaps 6
+24. Set interpolation grid to 96x96 (if using 100x100mm piece with some margin, this will give you about 1mm resolution)
+25. Click origin to go to the center you selected. Run Z probe one last time. This probe at the center will be the reference point 
+    used for the height map.
+26. Now start Probe. This will first probe at the origin position you've set then will move to the start of the border and begin 
+    probing the grid. Expect it to take around 30 minutes.
+27. If the bit crashes you may not have the leads connected properly.
+28. Inspect the probe results. If there is a really large variance there may be a problem with the way the piece is secured, or 
+    some conductive debris
+29. If all looks good, click Edit to finish "editing" the heightmap, then make sure the "Use heightmap" is checked
+30. With "Use heightmap" checked, all of your gcode as displayed will be slightly modified, with additional points added.
+31. Remove the alligator clip before starting!
+32. Start by clicking Send
+
+Outcomes:
+20-deg v-bit - apparently broke, most in air
+rb5 - 0.1 too wide for script F100 F10
+rb12 - trying 0.08 with F100 F10 - worse than rb5
+rb15 - trying 0.08 with F100 F10 - slightly better than rb5
+Waiting for new V-bits
