@@ -9,6 +9,9 @@ brim_width = 5.0;
 // Length of spout
 spout_length = 25.0;
 
+// Length of funnel
+funnel_length = 30.0;
+
 // Ratio of filler top to mouth
 top_to_bottom_ratio = 1.8;
 
@@ -17,16 +20,16 @@ wall_thickness = 2.0;
 
 // Flip upside down
 rotate([0,180,0])
-rotate_extrude($fn=200)
+rotate_extrude($fn=200, angle=360)
 //linear_extrude(height=10)
     polygon( points=[
   [jar_diameter/2,0],
   [jar_diameter/2-wall_thickness,0], 
   [jar_diameter/2-wall_thickness, spout_length+wall_thickness], 
-  [top_to_bottom_ratio*jar_diameter/2+spout_length-wall_thickness, top_to_bottom_ratio*jar_diameter/2+spout_length],
-  [top_to_bottom_ratio*jar_diameter/2+spout_length+brim_width, top_to_bottom_ratio*jar_diameter/2+spout_length],
-  [top_to_bottom_ratio*jar_diameter/2+spout_length+brim_width, top_to_bottom_ratio*jar_diameter/2+spout_length-wall_thickness],
-  [top_to_bottom_ratio*jar_diameter/2+spout_length, top_to_bottom_ratio*jar_diameter/2+spout_length-wall_thickness],
+  [top_to_bottom_ratio*jar_diameter/2-wall_thickness, funnel_length+spout_length],
+  [top_to_bottom_ratio*jar_diameter/2+brim_width, spout_length+funnel_length],
+  [top_to_bottom_ratio*jar_diameter/2+brim_width, spout_length+funnel_length-wall_thickness],
+  [top_to_bottom_ratio*jar_diameter/2, funnel_length+spout_length-wall_thickness],
   [jar_diameter/2, spout_length]
   ] );
   
