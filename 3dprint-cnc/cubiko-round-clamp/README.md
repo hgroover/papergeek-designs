@@ -36,3 +36,7 @@ Max height of stock: 24mm
 
 Without rails (simple):
 Max height of stock: 32mm
+
+Operation notes
+
+After Z probe to the aluminum baseplate, clearance height with the low-profile 15mm blocks should be 24mm.
