@@ -13,15 +13,15 @@ Model rocket assembly
 
 WAIT 1 - glue needs to set 30 minutes before continuing. Assemble parachute.
 
-P1. Apply self-adhesive reinforcements to all 8 holes in the parachute.
-P2. For each pair of parachute holes, tie the end of a string piece (pre-measured) to each hole using a square knot. Do not tighten so the parachute plastic crumples but make sure the knot is tight.
-P3. Gather together the 4 parachute shroud loops and tie a single overhand knot
-P4. Loop the shock cord through the bar in the bottom of the nose cone with about 4 inches to spare. Tie an overhand knot and tighten.
-P5. Tie the remaining end of the shock cord to the parachute shroud lines using a square knot. Tighten!
-P6. Hold the parachute at the top and gently smooth it down (like folding an umbrella).
-P7. Fold the parachute in half so the top is almost but not quite down to the shroud holes.
-P8. Gently wind the shroud lines, then the shock cord, around the outside of the parachute.
-P9. Stuff the parachute carefully into the fuselage and make sure the nose cone fits snugly
+101. Apply self-adhesive reinforcements to all 8 holes in the parachute.
+102. For each pair of parachute holes, tie the end of a string piece (pre-measured) to each hole using a square knot. Do not tighten so the parachute plastic crumples but make sure the knot is tight.
+103. Gather together the 4 parachute shroud loops and tie a single overhand knot
+104. Loop the shock cord through the bar in the bottom of the nose cone with about 4 inches to spare. Tie an overhand knot and tighten.
+105. Tie the remaining end of the shock cord to the parachute shroud lines using a square knot. Tighten!
+106. Hold the parachute at the top and gently smooth it down (like folding an umbrella).
+107. Fold the parachute in half so the top is almost but not quite down to the shroud holes.
+108. Gently wind the shroud lines, then the shock cord, around the outside of the parachute.
+109. Stuff the parachute carefully into the fuselage and make sure the nose cone fits snugly
 
 When WAIT 1 is complete, glue should be set enough to continue. Be careful as the glue is set but not fully dry.
 
@@ -36,4 +36,10 @@ https://github.com/OrcaSlicer/OrcaSlicer/releases/tag/v2.3.2
 
 OpenSCAD
 https://openscad.org/downloads.html
+
+FreeCAD
+https://www.freecad.org/downloads.php?lang=en
+
+Inkscape
+https://inkscape.org/release/inkscape-1.4.3/
 
