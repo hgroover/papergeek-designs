@@ -20,7 +20,7 @@ fin_root_chord = 57.15; // [10.0:0.05:100.0]
 fin_root_thickness = 1.4; // [0.2:0.1:3.0]
 
 // Fin root tightness
-fin_root_tightness = -0.1; // [-0.5:0.1:0.5]
+fin_root_tightness = 0.0; // [-0.5:0.1:0.5]
 
 /* [Fin root support] */
 fin_root_support_thickness = 2.0;
@@ -31,8 +31,8 @@ fin_root_support_taper = 1.0;
 
 lug_length = 20.0;
 
-// For 3/16 use 4.8; for 1/8 use 3.2
-lug_rod_diameter = 4.8;
+// For 3/16 use 5.5; for 1/8 use 4.0
+lug_rod_diameter = 5.5;
 
 // Lug standoff distance from outside of fuselage
 lug_standoff = 3;
@@ -55,7 +55,7 @@ module sleeve_tube() {
     }
 }
 
-// Fin root support cutter
+// Fin root support cutter - cuts the slot fins go into
 module fin_support_cutter() {
         translate([0,0,-0.4]) linear_extrude( height = fin_root_chord + 0.41, center = false, $fn=60 )
             polygon( points=[
@@ -96,6 +96,10 @@ module fin_root(index) {
         [-fin_root_total_thickness/2+fin_root_support_taper/2, fin_root_support_height]
         ] );
         fin_support_cutter();
+        // FIXME use proper parameter values
+        translate([-5,5,14+sleeve_length/2]) 
+          rotate([12,0,0])
+            cube( size=[10,10,10], center=false );
     }
 }
 
