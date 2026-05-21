@@ -11,7 +11,7 @@ pip_tolerance = 0.25; // [0.15:0.05:0.4]
 thick = 2; // [2.0:0.1:5.0]
 
 // Width of hinge plates
-width = 30; // [20:5:100]
+width = 30; // [15:5:100]
 
 // Height of hinge plates and hinge barrel
 height = 60; // [40:200]
@@ -30,7 +30,7 @@ segment_gap = 0.3; // [0.2:0.1:0.8]
 /* [Screw holes] */
 
 // Number of screwholes
-screwhole_count = 3;
+screwhole_count = 3; // [2:1:8]
 
 // Screwhole top diameter
 screwhole_top = 5.0; // [2.5:0.125:8.0]
@@ -44,15 +44,27 @@ hex_nut_trap_radius = 0; // [0.0:0.1:20.0]
 // Hex nut trap depth (2.8 for US #6, ignored if hex radius =  0)
 hex_nut_trap_depth = 0; // [0.0:0.1:6.0]
 
+// Extra inside margin
+extra_inside_margin = 0; // [0.0:0.1:5.0]
+
+// Bottom margin override - 0 for automatic
+bottom_margin_override = 0;
+
+// Enable offset spacing
+enable_offset_spacing = 1; // [0:1:1]
+
 /* [Hidden] */
 debugMode = true;
 
 core_radius = thick * 1.5;
 core_cap_radius = core_radius + thick + segment_gap;
 segment_height = (height - (count + 1) * segment_gap) / count;
-inside_margin = core_radius + segment_gap;
-bottom_margin = height/(screwhole_count + 1);
-vertical_spacing = bottom_margin;
+
+function inside_margin() = core_radius + segment_gap + extra_inside_margin;
+
+function bottom_margin() = bottom_margin_override == 0 ? height/(screwhole_count + 1) : bottom_margin_override;
+
+function vertical_spacing() = bottom_margin_override == 0 ? bottom_margin() : (height - 2 * bottom_margin_override) / (screwhole_count - 1);
 
 // Hinge segment
 module hinge_segment(index) {
@@ -81,7 +93,7 @@ module hinge_plate_base() {
     }
 }
 
-function hole_horizontal_spacing(index) = (index % 2) == 0 ? width/4 : -width/4 + inside_margin;
+function hole_horizontal_spacing(index) = (index % 2) * enable_offset_spacing == 0 ? width/4 : -width/4 + inside_margin();
 
 
 // Hole object
@@ -89,7 +101,7 @@ module hole_object(index, right_shift) {
     // Local vars are automatic since 2015.03
     //echo("index", index, "rs", right_shift, "hs", hole_horizontal_spacing(index));
     height_addition = (hex_nut_trap_radius == 0) ? 0.2 : 2 * hex_nut_trap_depth;
-    translate([right_shift*(core_radius+segment_gap+width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-height_addition/2), bottom_margin + vertical_spacing * index])
+    translate([right_shift*(core_radius+segment_gap+width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-height_addition/2), bottom_margin() + vertical_spacing() * index])
         rotate([90,0,0])
             cylinder(h=thick+height_addition, r1=screwhole_top/2, r2=(screwhole_top-screwhole_bottom_reduce)/2, $fn=50);
 }
@@ -98,11 +110,11 @@ module hole_object(index, right_shift) {
 module hex_nut_trap(index, right_shift) {
     if (hex_nut_trap_radius > 0 && hex_nut_trap_depth > 0) {
         difference() {
-            translate([right_shift * (core_radius + segment_gap + width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-thick), bottom_margin + vertical_spacing * index])
+            translate([right_shift * (core_radius + segment_gap + width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-thick), bottom_margin() + vertical_spacing() * index])
                 rotate([90,0,0])
                     linear_extrude(hex_nut_trap_depth, center=false)
                         circle( r=hex_nut_trap_radius+thick, $fn=6);
-            translate([right_shift * (core_radius + segment_gap + width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-thick-0.1), bottom_margin + vertical_spacing * index])
+            translate([right_shift * (core_radius + segment_gap + width/2 + hole_horizontal_spacing(index)), -(core_radius+segment_gap-thick-0.1), bottom_margin() + vertical_spacing() * index])
                 rotate([90,0,0])
                     linear_extrude(hex_nut_trap_depth+0.2, center=false)
                         circle( r=hex_nut_trap_radius, $fn=6);
@@ -140,6 +152,7 @@ module hinge_plate_left() {
     }
 }
 
+echo ("Vertical spacing", vertical_spacing());
 translate([0,0,core_cap_radius]) rotate([90,0,0]) {
     union() {
         
