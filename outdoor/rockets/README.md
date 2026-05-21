@@ -43,3 +43,16 @@ https://www.freecad.org/downloads.php?lang=en
 Inkscape
 https://inkscape.org/release/inkscape-1.4.3/
 
+
+Slideshows on 3D printing
+Folder with all slides
+https://drive.google.com/drive/folders/15FzPQOjWHKXmR_TOg-_cjbI6yU1VnizG?usp=sharing
+
+Tinkercad nameplate
+https://drive.google.com/file/d/1jLVNG9QpDfhtOV03qzy22BdwlqDRmf4N/view?usp=drive_link
+
+3D printing buyer's guide
+https://drive.google.com/file/d/1hNWhJrm3Ha7YO7G41nA2vBn0dwrVEyxr/view?usp=drive_link
+
+Tinkercad
+https://tinkercad.com
