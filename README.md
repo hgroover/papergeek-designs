@@ -20,6 +20,11 @@ Tap holes should allow the screw to be turned into the hole without drilling and
 Through hole R=2.6
 Head width R=5.0
 
+#### &hash;8 truss head machine screw 8-32
+Head diameter D=9.5
+Through hole D=4.5
+Tap hole D=4.1
+
 #### &hash;6
 
 &hash;6 panhead machine screw
